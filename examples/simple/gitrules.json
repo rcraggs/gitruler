@@ -1,4 +1,4 @@
 [
-  { "rule": "a", "data": "2"},
-  { "rule": "b", "data": "1"}
+  { "rule": "file-exists-in-head", "path": "file1.txt"},
+  { "rule": "file-exists-in-head", "path": "folder/file1.txt"}
 ]

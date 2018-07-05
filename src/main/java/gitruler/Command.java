@@ -2,29 +2,47 @@ package gitruler;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
-@CommandLine.Command(name = "example", mixinStandardHelpOptions = true, version = "Picocli example 3.0")
+@CommandLine.Command(name = "testrepo", mixinStandardHelpOptions = true, version = "Gitruler 1.0")
 public class Command implements Runnable {
 
-    @Option(names = { "-v", "--verbose" }, description = "Verbose mode. Helpful for troubleshooting. " +
-            "Multiple -v options increase the verbosity.")
-    private boolean[] verbose = new boolean[0];
+    private static final String DEFAULT_CONFIG_FILENAME = "gitrules.json";
 
-    @Parameters(arity = "1..*", paramLabel = "FILE", description = "File(s) to process.")
-    private File[] inputFiles;
+    @Option(names = { "-c", "--config" }, paramLabel = "Config File Path", description = "The file containing rules")
+    private String configFilePath;
+
+    @Option(names = { "-r", "--repo" }, paramLabel = "Repository Path", description = "The repository to test")
+    private String repositoryPath;
+
+
+    private GitRulerConfig config;
 
     public void run() {
-        if (verbose.length > 0) {
-            System.out.println(inputFiles.length + " files to process...");
+
+        // Read the config
+        if (repositoryPath == null){
+            repositoryPath = System.getProperty("user.dir");
         }
-        if (verbose.length > 1) {
-            for (File f : inputFiles) {
-                System.out.println(f.getAbsolutePath());
-            }
+
+        // Read the config
+        if (configFilePath == null){
+            configFilePath = System.getProperty("user.dir") + File.separator +  Command.DEFAULT_CONFIG_FILENAME;
         }
+
+        try {
+            config = new GitRulerConfig(configFilePath);
+        } catch (IOException e) {
+            System.out.println("Could not read configuration from " + configFilePath);
+        }
+
+        // Check the there is a repository at the given path
+
+
+
     }
 
     public static void main(String[] args) {

@@ -32,8 +32,6 @@ public class Command implements Runnable {
 
     public void run() {
 
-
-
         // Read the config
         if (repositoryPath == null){
             repositoryPath = System.getProperty("user.dir");
@@ -66,17 +64,32 @@ public class Command implements Runnable {
 
         // Process each of the rules
         for (Rule r: config.getRules()){
-            RuleResult result = git.checkRule(r);
-            String resultString = result.hasPassed() ? CORRECT_TICK : WRONG_CROSS;
-            resultString += " " + r.getTitle() + " " + result.getMessage();
 
-            System.out.println(resultString);
+            RuleResult result = git.checkRule(r);
+            System.out.println(createOutputFromRuleAndResult(result, r));
 
             if (!result.hasPassed() && r.stopOnFail()){
                 System.out.println(ANSI_CYAN + "Exiting because a critical rule didn't pass" + ANSI_RESET);
                 System.exit(0);
             }
         }
+    }
+
+    String createOutputFromRuleAndResult(RuleResult result, Rule rule) {
+
+        StringBuilder resultString = new StringBuilder();
+
+        resultString.append(result.hasPassed() ? CORRECT_TICK : WRONG_CROSS);
+
+        if (rule.hasPreText())
+            resultString.append(" ").append(rule.getPreText());
+
+        resultString.append(" ").append(rule.getTitle()).append(" ").append(result.getMessage());
+
+        if (rule.hasPostText())
+            resultString.append(rule.getPostText());
+
+        return resultString.toString();
     }
 
     public static void main(String[] args) {

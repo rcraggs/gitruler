@@ -4,7 +4,6 @@ import java.util.Map;
 
 public class Rule {
 
-
     /***
      * Adding a new rule:
      * Add a test to the test repo
@@ -19,6 +18,10 @@ public class Rule {
     }
 
     String getTitle() {
+
+        if (details.containsKey("alternative-title")){
+            return getStringParameter("alternative-title");
+        }
 
         switch (getRuleName()){
             case "file-exists-in-head":
@@ -47,4 +50,19 @@ public class Rule {
         return details.containsKey("stop-on-fail") && ((Boolean)details.get("stop-on-fail"));
     }
 
+    boolean hasPreText() {
+        return details.containsKey("pre-text");
+    }
+
+    boolean hasPostText() {
+        return details.containsKey("post-text");
+    }
+
+    String getPreText() {
+        return getStringParameter("pre-text");
+    }
+
+    String getPostText() {
+        return getStringParameter("post-text");
+    }
 }

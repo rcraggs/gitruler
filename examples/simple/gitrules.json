@@ -1,5 +1,6 @@
 [
   { "rule": "head-exists", "stop-on-fail":true},
+  { "rule": "head-exists", "stop-on-fail":true, "alternative-title":"Did you create the Repo?", "pre-text":"Step 1.", "post-text":"Howdy!"},
   { "rule": "file-exists-in-head", "path": "file1.txt"},
   { "rule": "file-exists-in-head", "path": "folder/file1.txt"},
   { "rule": "file-not-exist-in-head", "path": "folder/not-here.txt"},

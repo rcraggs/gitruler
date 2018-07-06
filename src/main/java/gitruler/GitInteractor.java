@@ -1,10 +1,18 @@
 package gitruler;
 
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.PathFilter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 class GitInteractor {
 
@@ -26,10 +34,111 @@ class GitInteractor {
 
     RuleResult checkRule(Rule r) {
 
+        switch (r.getRuleName()){
+            case "head-exists":
+                return checkHeadExists();
+            case "file-exists-in-head":
+                return checkFileExistsInHead(r);
+            case "file-not-exist-in-head":
+                return checkFileNotExistsInHead(r);
+            case "blob-exists-in-location-in-head":
+                return checkBlobInLocationInHead(r);
+            default:
+                RuleResult result = new RuleResult();
+                result.setPassed(false);
+                result.setMessage("Could not run this rule.");
+                return result;
+        }
+    }
+
+    private RuleResult checkBlobInLocationInHead(Rule r) {
+
+        String path = r.getStringParameter("path");
+        String id = r.getStringParameter("hash");
+
         RuleResult result = new RuleResult();
-        result.setPassed(false);
-        result.setMessage("This is a test message.");
+
+        try {
+            boolean pathFound = pathExistsInCommit(Constants.HEAD, path, id);
+            result.setPassed(pathFound);
+        } catch (IOException e) {
+            result.setPassed(false);
+            result.setMessage("An error occurred when running this rule.");
+        }
+        return result;
+    }
+
+    private RuleResult checkFileNotExistsInHead(Rule r) {
+
+        // Get the necessary parameters
+        String path = r.getStringParameter("path");
+        RuleResult result = new RuleResult();
+        try {
+            boolean pathFound = pathExistsInCommit(Constants.HEAD, path);
+            result.setPassed(!pathFound);
+        } catch (IOException e) {
+            result.setPassed(false);
+            result.setMessage("An error occurred when running this rule.");
+        }
 
         return result;
+    }
+
+    private RuleResult checkHeadExists() {
+
+        RuleResult result = new RuleResult();
+
+        try {
+            ObjectId head = repo.resolve(Constants.HEAD);
+            result.setPassed(head != null);
+        } catch (IOException e) {
+            result.setPassed(false);
+            result.setMessage("An error occurred when running this rule.");
+        }
+
+        return result;
+    }
+
+    private RuleResult checkFileExistsInHead(Rule r) {
+
+        // Get the necessary parameters
+        String path = r.getStringParameter("path");
+        RuleResult result = new RuleResult();
+        try {
+            boolean pathFound = pathExistsInCommit(Constants.HEAD, path);
+            result.setPassed(pathFound);
+        } catch (IOException e) {
+            result.setPassed(false);
+            result.setMessage("An error occurred when running this rule.");
+        }
+
+        return result;
+    }
+
+    private boolean pathExistsInCommit(String commitRefString, String path) throws IOException {
+        return pathExistsInCommit(commitRefString, path, "");
+    }
+
+
+    private boolean pathExistsInCommit(String commitRefString, String path, String id ) throws IOException {
+
+        ObjectId commitId = repo.resolve(commitRefString);
+        RevWalk revWalk = new RevWalk(repo);
+        RevCommit commit = revWalk.parseCommit(commitId);
+        RevTree tree = commit.getTree();
+
+        TreeWalk treeWalk = new TreeWalk(repo);
+        treeWalk.addTree(tree);
+        treeWalk.setRecursive(true);
+        treeWalk.setFilter(PathFilter.create(path));
+        while (treeWalk.next()) {
+            if (treeWalk.getPathString() != null){
+                ObjectId objectId = treeWalk.getObjectId(0);
+                // If an id is passed in check that it matches, otherwise return true anyway
+                return (id == null || id.isEmpty() || Objects.equals(objectId.getName(), id));
+            }
+        }
+
+        return false;
     }
 }

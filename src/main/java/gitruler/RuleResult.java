@@ -6,7 +6,7 @@ package gitruler;
 public class RuleResult {
 
     private boolean passed;
-    private String message;
+    private String message = "";
 
     void setPassed(boolean passed) {
         this.passed = passed;

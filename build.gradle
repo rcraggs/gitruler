@@ -1,5 +1,5 @@
 group 'com.rcraggs'
-version '1.0-SNAPSHOT'
+version '0.1'
 
 apply plugin: 'java'
 
@@ -33,4 +33,7 @@ dependencies {
     compile 'org.json:json:20180130'
     compile 'commons-io:commons-io:2.6'
     compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.0.1.201806211838-r'
+
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-nop
+    testCompile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.25'
 }

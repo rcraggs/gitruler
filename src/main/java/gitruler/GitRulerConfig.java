@@ -7,16 +7,21 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 class GitRulerConfig {
 
     List<Rule> rules = new ArrayList<>();
+    Map<String, String> setupFiles= new HashMap<>();
 
     GitRulerConfig(String path) throws IOException {
 
         String configData = FileUtils.readFileToString(new File(path), Charset.forName("UTF-8"));
-        JSONArray rulesJson = new JSONArray(configData);
+
+        JSONObject rulesRoot = new JSONObject(configData);
+        JSONArray rulesJson = rulesRoot.getJSONArray("rules");
 
         for (int i = 0; i < rulesJson.length(); ++i) {
 
@@ -25,15 +30,26 @@ class GitRulerConfig {
             JSONObject rule = rulesJson.getJSONObject(i);
             Iterator<?> keys = rule.keys();
 
-            while( keys.hasNext() ) {
-                String key = (String)keys.next();
+            while (keys.hasNext()) {
+                String key = (String) keys.next();
                 ruleDetails.put(key, rule.get(key));
             }
             rules.add(new Rule(ruleDetails));
+        }
+
+        // Create the files in the setup
+        JSONArray setupJson = rulesRoot.getJSONArray("setup-files");
+        for (int i = 0; i < setupJson.length(); ++i) {
+            JSONObject file = setupJson.getJSONObject(i);
+            setupFiles.put(file.getString("path"), file.getString("contents"));
         }
     }
 
     Iterable<Rule> getRules() {
         return rules;
+    }
+
+    Map<String, String> getSetupFiles() {
+        return setupFiles;
     }
 }

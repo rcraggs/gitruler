@@ -5,6 +5,7 @@ import picocli.CommandLine.Option;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.*;
 
 @CommandLine.Command(name = "testrepo", mixinStandardHelpOptions = true, version = "Gitruler 1.0")
 public class Command implements Runnable {
@@ -19,6 +20,10 @@ public class Command implements Runnable {
 
 
     private static final String DEFAULT_CONFIG_FILENAME = "gitrules.json";
+
+    @Option(names = { "-v", "--verbose" }, description = "Verbose mode. Helpful for troubleshooting. " +
+            "Multiple -v options increase the verbosity.")
+    private boolean verbose;
 
     @Option(names = { "-c", "--config" }, paramLabel = "Config File Path", description = "The file containing rules")
     private String configFilePath;
@@ -38,13 +43,13 @@ public class Command implements Runnable {
         }
 
         // Read the config
-        if (configFilePath == null){
 
+        if (configFilePath == null){
             String repoRoot = repositoryPath;
-            if (repoRoot.endsWith(".git")){
-                repoRoot = repoRoot.substring(0, repoRoot.length() - 4);
-            }
             configFilePath = repoRoot + File.separator +  Command.DEFAULT_CONFIG_FILENAME;
+//            if (repoRoot.endsWith(".git")){
+//                repoRoot = repoRoot.substring(0, repoRoot.length() - 4);
+//            }
         }
 
         try {
@@ -59,6 +64,35 @@ public class Command implements Runnable {
             git = new GitInteractor(repositoryPath);
         } catch (IOException e) {
             System.out.println(repositoryPath + File.separator + ".git is not a valid git repository");
+            System.exit(1);
+        }
+
+        try {
+            // If this is the first time, then create the setup files
+            if (!Files.exists(Paths.get(repositoryPath + File.separator + ".gitruler"),
+                    LinkOption.NOFOLLOW_LINKS)) {
+
+                for (String path : config.getSetupFiles().keySet()) {
+                    String content = config.getSetupFiles().get(path);
+                    Path newFilePath = Paths.get(repositoryPath + File.separator + path);
+                    try {
+                        Files.createDirectories(newFilePath.getParent());
+                        Files.createFile(newFilePath);
+                        Files.write(Paths.get(repositoryPath + File.separator + path), content.getBytes());
+                    }catch(FileAlreadyExistsException e){
+                        if (verbose) {
+                            System.out.println("Warning: I was asked to create a file that already exists: " + newFilePath.toString() );
+                        }
+                    }
+                }
+
+                Files.write(Paths.get(repositoryPath + File.separator + ".gitruler"), "setup done".getBytes());
+            }
+        } catch (IOException e) {
+            System.out.println("Couldn't create setup files");
+            if (verbose){
+                e.printStackTrace();
+            }
             System.exit(1);
         }
 

@@ -24,6 +24,8 @@ public class Rule {
         }
 
         switch (getRuleName()){
+            case "file-contains-in-head":
+                return "The file: " + (String) details.get("path") + " contains the text '" + (String) details.get("contents") + "'";
             case "file-exists-in-head":
                 return "The file exists: " + (String) details.get("path");
             case "head-exists":
@@ -64,5 +66,9 @@ public class Rule {
 
     String getPostText() {
         return getStringParameter("post-text");
+    }
+
+    boolean getBooleanParameter(String s) {
+        return details.containsKey(s) && (boolean) details.get(s);
     }
 }

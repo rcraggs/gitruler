@@ -2,6 +2,7 @@ package gitruler;
 
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -10,11 +11,9 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.Objects;
+import java.util.Scanner;
 
 class GitInteractor {
 
@@ -45,12 +44,45 @@ class GitInteractor {
                 return checkFileNotExistsInHead(r);
             case "blob-exists-in-location-in-head":
                 return checkBlobInLocationInHead(r);
+            case "file-contains-in-head":
+                return checkFileContainsContents(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    private RuleResult checkFileContainsContents(Rule r) {
+
+        String path = r.getStringParameter("path");
+        String contents = r.getStringParameter("contents");
+        boolean caseInsensitive = r.getBooleanParameter("ignore-case");
+        RuleResult result = new RuleResult();
+
+        try {
+            String fileContents = getContentsOfFileInCommit(Constants.HEAD, path);
+
+            boolean foundMatch;
+            if (fileContents == null){
+                foundMatch = false;
+            }else{
+
+                if (caseInsensitive) {
+                    foundMatch = fileContents.toLowerCase().contains(contents.toLowerCase());
+                }
+                else{
+                    foundMatch = fileContents.contains(contents);
+                }
+            }
+
+            result.setPassed(foundMatch);
+
+        } catch (Exception e) {
+            result = createResultFromException(e);
+        }
+        return result;
     }
 
     private RuleResult checkBlobInLocationInHead(Rule r) {
@@ -139,6 +171,29 @@ class GitInteractor {
             }
         }
         return false;
+    }
+
+    private String getContentsOfFileInCommit(String commitRefString, String path) throws IOException, NullPointerException {
+
+        ObjectId commitId = repo.resolve(commitRefString);
+        RevWalk revWalk = new RevWalk(repo);
+        RevCommit commit = revWalk.parseCommit(commitId);
+        RevTree tree = commit.getTree();
+
+        TreeWalk treeWalk = new TreeWalk(repo);
+        treeWalk.addTree(tree);
+        treeWalk.setRecursive(true);
+        treeWalk.setFilter(PathFilter.create(path));
+        while (treeWalk.next()) {
+            if (treeWalk.getPathString() != null){
+                ObjectId objectId = treeWalk.getObjectId(0);
+                ObjectLoader loader = repo.open(objectId);
+                InputStream in = loader.openStream();
+                Scanner s = new Scanner(in).useDelimiter("\\A");
+                return s.hasNext() ? s.next() : "";
+            }
+        }
+        return null;
     }
 
     private RuleResult createResultFromException(Exception e) {

@@ -12,6 +12,8 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Objects;
 
 class GitInteractor {
@@ -62,8 +64,7 @@ class GitInteractor {
             boolean pathFound = pathExistsInCommit(Constants.HEAD, path, id);
             result.setPassed(pathFound);
         } catch (Exception e) {
-            result.setPassed(false);
-            result.setMessage("An error occurred when running this rule.");
+            result = createResultFromException(e);
         }
         return result;
     }
@@ -138,5 +139,18 @@ class GitInteractor {
             }
         }
         return false;
+    }
+
+    private RuleResult createResultFromException(Exception e) {
+        RuleResult result = new RuleResult();
+        result.setPassed(false);
+        result.setMessage("An error occurred when running this rule.");
+        result.setExceptionMessage(e.getMessage());
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        result.setExceptionTrace(sw.toString());
+        result.exceptionOccurred = true;
+        return result;
     }
 }

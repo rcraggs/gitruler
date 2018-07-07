@@ -7,6 +7,9 @@ public class RuleResult {
 
     private boolean passed;
     private String message = "";
+    private String exceptionMessage = "";
+    private String exceptionTrace = "";
+    public boolean exceptionOccurred;
 
     void setPassed(boolean passed) {
         this.passed = passed;
@@ -22,5 +25,21 @@ public class RuleResult {
 
     String getMessage(){
         return this.message;
+    }
+
+    public String getExceptionMessage() {
+        return exceptionMessage;
+    }
+
+    public void setExceptionMessage(String exceptionMessage) {
+        this.exceptionMessage = exceptionMessage;
+    }
+
+    public String getExceptionTrace() {
+        return exceptionTrace;
+    }
+
+    public void setExceptionTrace(String exceptionTrace) {
+        this.exceptionTrace = exceptionTrace;
     }
 }

@@ -14,9 +14,11 @@ public class Command implements Runnable {
     private static final String ANSI_RED = "\u001B[31m";
     private static final String ANSI_GREEN = "\u001B[32m";
     private static final String ANSI_CYAN = "\u001B[36m";
+    public static final String ANSI_YELLOW = "\u001B[33m";
 
     private static final String CORRECT_TICK = ANSI_GREEN + "[\u2713]" + ANSI_RESET;
     private static final String WRONG_CROSS = ANSI_RED + "[\u2718]" + ANSI_RESET;
+    private static final String SKIP = ANSI_YELLOW + "[-]" + ANSI_RESET;
 
 
     private static final String DEFAULT_CONFIG_FILENAME = "gitrules.json";
@@ -97,21 +99,29 @@ public class Command implements Runnable {
         }
 
         // Process each of the rules
+        boolean skipRemainingRules = false;
         for (Rule r: config.getRules()){
 
             RuleResult result = git.checkRule(r);
-            System.out.println(createOutputFromRuleAndResult(result, r));
+            System.out.println(createOutputFromRuleAndResult(result, r, skipRemainingRules));
 
             if (!result.hasPassed() && r.stopOnFail()){
-                System.out.println(ANSI_CYAN + "Exiting because a critical rule didn't pass" + ANSI_RESET);
-                System.exit(0);
+                skipRemainingRules = true;
             }
+        }
+
+        if (skipRemainingRules){
+            System.out.println(ANSI_CYAN + "Skipped rules because a critical rule didn't pass" + ANSI_RESET);
         }
     }
 
-    private String createOutputFromRuleAndResult(RuleResult result, Rule rule) {
+    private String createOutputFromRuleAndResult(RuleResult result, Rule rule, boolean skipRemainingRules) {
 
         StringBuilder resultString = new StringBuilder();
+
+        if (skipRemainingRules){
+            return SKIP + " " + rule.getTitle();
+        }
 
         resultString.append(result.hasPassed() ? CORRECT_TICK : WRONG_CROSS);
 
@@ -122,6 +132,12 @@ public class Command implements Runnable {
 
         if (rule.hasPostText())
             resultString.append(rule.getPostText());
+
+        if (result.exceptionOccurred && verbose){
+            resultString.append("Exception:");
+            resultString.append(result.getExceptionMessage());
+            resultString.append(result.getExceptionTrace());
+        }
 
         return resultString.toString();
     }

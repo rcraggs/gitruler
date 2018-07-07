@@ -75,7 +75,7 @@ public class Command implements Runnable {
         }
     }
 
-    String createOutputFromRuleAndResult(RuleResult result, Rule rule) {
+    private String createOutputFromRuleAndResult(RuleResult result, Rule rule) {
 
         StringBuilder resultString = new StringBuilder();
 
@@ -93,7 +93,6 @@ public class Command implements Runnable {
     }
 
     public static void main(String[] args) {
-        System.setProperty("picocli.trace", "OFF");
         CommandLine.run(new Command(), System.out, args);
     }
 }

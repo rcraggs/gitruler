@@ -61,7 +61,7 @@ class GitInteractor {
         try {
             boolean pathFound = pathExistsInCommit(Constants.HEAD, path, id);
             result.setPassed(pathFound);
-        } catch (IOException e) {
+        } catch (Exception e) {
             result.setPassed(false);
             result.setMessage("An error occurred when running this rule.");
         }
@@ -76,7 +76,7 @@ class GitInteractor {
         try {
             boolean pathFound = pathExistsInCommit(Constants.HEAD, path);
             result.setPassed(!pathFound);
-        } catch (IOException e) {
+        } catch (Exception e) {
             result.setPassed(false);
             result.setMessage("An error occurred when running this rule.");
         }
@@ -91,7 +91,7 @@ class GitInteractor {
         try {
             ObjectId head = repo.resolve(Constants.HEAD);
             result.setPassed(head != null);
-        } catch (IOException e) {
+        } catch (Exception e) {
             result.setPassed(false);
             result.setMessage("An error occurred when running this rule.");
         }
@@ -107,7 +107,7 @@ class GitInteractor {
         try {
             boolean pathFound = pathExistsInCommit(Constants.HEAD, path);
             result.setPassed(pathFound);
-        } catch (IOException e) {
+        } catch (Exception e) {
             result.setPassed(false);
             result.setMessage("An error occurred when running this rule.");
         }
@@ -115,12 +115,11 @@ class GitInteractor {
         return result;
     }
 
-    private boolean pathExistsInCommit(String commitRefString, String path) throws IOException {
+    private boolean pathExistsInCommit(String commitRefString, String path) throws IOException, NullPointerException {
         return pathExistsInCommit(commitRefString, path, "");
     }
 
-
-    private boolean pathExistsInCommit(String commitRefString, String path, String id ) throws IOException {
+    private boolean pathExistsInCommit(String commitRefString, String path, String id ) throws IOException, NullPointerException {
 
         ObjectId commitId = repo.resolve(commitRefString);
         RevWalk revWalk = new RevWalk(repo);
@@ -138,7 +137,6 @@ class GitInteractor {
                 return (id == null || id.isEmpty() || Objects.equals(objectId.getName(), id));
             }
         }
-
         return false;
     }
 }

@@ -23,12 +23,6 @@ GitRuler needs a configuration file (syntax described below) and a repository to
 
 e.g. `java -jar <path-to-jar> -c ~/myotherrules.json -r ~/another/repository/`
 
-
-## Screenshot
-
-![Example Screenshot](docs/images/example-screenshot.png  =500x120)
-
-
 ## Creating Exercises
 
 An exercise consists of:

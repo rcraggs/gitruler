@@ -26,14 +26,18 @@ public class Rule {
         switch (getRuleName()){
             case "file-contains-in-head":
                 return "The file: " + (String) details.get("path") + " contains the text '" + (String) details.get("contents") + "'";
-            case "file-exists-in-head":
-                return "The file exists: " + (String) details.get("path");
+            case "file-tracked-in-head":
+                return "The file is tracked: " + (String) details.get("path");
             case "head-exists":
                 return "There is a valid repository";
-            case "file-not-exist-in-head":
-                return "The file should not exist: " + (String) details.get("path");
-            case "blob-exists-in-location-in-head":
+            case "file-untracked-in-head":
+                return "The file is not tracked: " + (String) details.get("path");
+            case "file-has-hash-in-head":
                 return "An existing file should now be at: " + (String) details.get("path");
+            case "last-commit-message-for-file-contains":
+                return "Latest commit message for " + (String) details.get("path") + " contains " + (String) details.get("contents");
+            case "any-commit-message-for-file-contains":
+                return "Any commit message for " + (String) details.get("path") + " contains " + (String) details.get("contents");
             default:
                 return "Unknown rule";
         }

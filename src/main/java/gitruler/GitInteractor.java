@@ -1,5 +1,7 @@
 package gitruler;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -12,6 +14,8 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -38,20 +42,76 @@ class GitInteractor {
         switch (r.getRuleName()){
             case "head-exists":
                 return checkHeadExists();
-            case "file-exists-in-head":
+            case "file-tracked-in-head":
                 return checkFileExistsInHead(r);
-            case "file-not-exist-in-head":
+            case "file-untracked-in-head":
                 return checkFileNotExistsInHead(r);
-            case "blob-exists-in-location-in-head":
+            case "file-has-hash-in-head":
                 return checkBlobInLocationInHead(r);
             case "file-contains-in-head":
                 return checkFileContainsContents(r);
+            case "last-commit-message-for-file-contains":
+                return checkCommitForPathContains(r, true);
+            case "any-commit-message-for-file-contains":
+                return checkCommitForPathContains(r, false);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    private RuleResult checkCommitForPathContains(Rule r, boolean mustBeLastCommit) {
+
+        String path = r.getStringParameter("path");
+        String contents = r.getStringParameter("contents");
+        boolean caseInsensitive = r.getBooleanParameter("ignore-case");
+        RuleResult result = new RuleResult();
+        result.setPassed(false);
+        try {
+
+            List<RevCommit> commits = new ArrayList<>();
+            double latestTimeCommit = 0;
+            Git git = new Git(repo);
+            RevCommit start = null;
+            Iterable<RevCommit> log = git.log().addPath(path).call();
+
+            // Collect the commits to check
+            for (RevCommit commit : log) {
+
+                if (mustBeLastCommit) {
+                    if (commit.getCommitTime() > latestTimeCommit) {
+                        // Only keep the latest commit
+                        latestTimeCommit = commit.getCommitTime();
+                        commits.clear();
+                        commits.add(commit);
+                    }
+                } else {
+                    commits.add(commit);
+                }
+            }
+
+            // Check the commits for a matching message
+            for (RevCommit commit : commits) {
+                if (caseInsensitive) {
+                    if (commit.getFullMessage().toLowerCase().contains(contents.toLowerCase())){
+                        result.setPassed(true);
+                        return result;
+                    }
+                }
+                else{
+                    if (commit.getFullMessage().contains(contents)){
+                        result.setPassed(true);
+                        return result;
+                    }
+                }
+            }
+        }catch(GitAPIException e){
+            result = createResultFromException(e);
+        }
+
+        return result;
     }
 
     private RuleResult checkFileContainsContents(Rule r) {

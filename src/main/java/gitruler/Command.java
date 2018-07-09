@@ -49,9 +49,6 @@ public class Command implements Runnable {
         if (configFilePath == null){
             String repoRoot = repositoryPath;
             configFilePath = repoRoot + File.separator +  Command.DEFAULT_CONFIG_FILENAME;
-//            if (repoRoot.endsWith(".git")){
-//                repoRoot = repoRoot.substring(0, repoRoot.length() - 4);
-//            }
         }
 
         try {

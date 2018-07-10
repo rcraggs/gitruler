@@ -14,6 +14,7 @@
     { "rule": "last-commit-message-for-file-contains", "path":"folder/c", "contents":"Caterpillar", "ignore-case":true},
     { "rule": "any-commit-message-for-file-contains", "path":"folder/c", "contents":"COMMIT", "ignore-case":true},
     { "rule": "last-commit-message-for-file-contains", "path":"folder/c", "contents":"caterpillar", "ignore-case":false},
-    { "rule": "last-commit-message-for-file-contains", "path":"folder/z", "contents":"ads", "ignore-case":false}
+    { "rule": "last-commit-message-for-file-contains", "path":"folder/z", "contents":"ads", "ignore-case":false},
+    { "rule": "commit-with-message-updated-file", "contents": "ads", "path":"folder/a"}
   ]
 }

@@ -1,5 +1,6 @@
 package gitruler;
 
+import org.json.JSONException;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -55,6 +56,9 @@ public class Command implements Runnable {
             config = new GitRulerConfig(configFilePath);
         } catch (IOException e) {
             System.out.println("Could not read configuration from " + configFilePath);
+            System.exit(1);
+        } catch (JSONException e) {
+            System.out.println("JSON formatting error in " + configFilePath);
             System.exit(1);
         }
 

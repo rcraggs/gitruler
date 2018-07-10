@@ -70,6 +70,9 @@ Rules are the checks that will be made on the repository each time the applicati
 | `file-contains-in-head` | Check that a file contains a phrase within its contents in the last commit | `path`, `contents` | `ignore-case` |
 | `last-commit-message-for-file-contains` | Check that the last commit message for a file contains a phrase | `path`, `contents` | `ignore-case` |
 | `any-commit-message-for-file-contains` | Check that there is any commit message for a file containing a phrase | `path`, `contents` | `ignore-case` |
+| `any-commit-message-contains` | Check that there is a commit that contains a phrase | `contents` | `ignore-case` |
+| `commit-with-message-updated-file` | Check that a commit whose message contains a phrase had an update to a file| `path`, `contents` | `ignore-case` |
+| `commit-with-message-doesnt-update-file` | Check that a commit whose message contains a phrase does not update a file| `path`, `contents` | `ignore-case` |
 
 #### Common Rule Options
 

@@ -38,6 +38,12 @@ public class Rule {
                 return "Latest commit message for " + (String) details.get("path") + " contains " + (String) details.get("contents");
             case "any-commit-message-for-file-contains":
                 return "Any commit message for " + (String) details.get("path") + " contains " + (String) details.get("contents");
+            case "any-commit-message-contains":
+                return "Any commit message contains '" + (String) details.get("contents") + "'";
+            case "commit-with-message-updated-file":
+                return "A commit with a message containing '" + (String) details.get("contents") + "' included a change to '" + (String) details.get("path") + "'";
+            case "commit-with-message-doesnt-update-file":
+                return "A commit with a message containing '" + (String) details.get("contents") + "' does not include a change to '" + (String) details.get("path") + "'";
             default:
                 return "Unknown rule";
         }

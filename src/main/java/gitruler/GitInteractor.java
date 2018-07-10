@@ -2,14 +2,13 @@ package gitruler;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 
@@ -21,6 +20,7 @@ import java.util.Scanner;
 
 class GitInteractor {
 
+    public static final String THE_FILE_WAS_NOT_CHANGED_IN_THE_COMMIT = "The file was not changed in the commit";
     private Repository repo;
 
     GitInteractor(String path) throws IOException {
@@ -54,6 +54,12 @@ class GitInteractor {
                 return checkCommitForPathContains(r, true);
             case "any-commit-message-for-file-contains":
                 return checkCommitForPathContains(r, false);
+            case "any-commit-message-contains":
+                return checkCommitForPathContains(r, false);
+            case "commit-with-message-updated-file":
+                return checkCommitWithContentsUpdatedPath(r);
+            case "commit-with-message-doesnt-update-file":
+                return checkCommitWithContentsDoesntUpdatePath(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
@@ -62,9 +68,112 @@ class GitInteractor {
         }
     }
 
+    private RuleResult checkCommitWithContentsDoesntUpdatePath(Rule r) {
+
+        RuleResult result = new RuleResult();
+        String message = getReasonIfCheckForFileInCommitFails(r);
+        if (Objects.equals(message, THE_FILE_WAS_NOT_CHANGED_IN_THE_COMMIT)){
+            result.setPassed(true);
+        }else{
+            result.setPassed(false);
+            result.setMessage(message);
+        }
+
+        return result;
+    }
+
+    private String getReasonIfCheckForFileInCommitFails(Rule r) {
+
+        String contents = r.getStringParameter("contents");
+        String path = r.getStringParameter("path");
+
+        boolean caseInsensitive = r.getBooleanParameter("ignore-case");
+        try {
+            RevCommit commit = getCommitWithMessageContaining(contents, caseInsensitive);
+
+            Git git = new Git(repo);
+
+            if (commit != null) {
+
+                CanonicalTreeParser commitTree = getCommitTree(git, commit.getTree().getId());
+
+                // Get the parent of this commit to compare it with
+                RevCommit[] parents = commit.getParents();
+                if (parents.length != 1){
+                    return "The commit with that message didn't have exactly one parent commit";
+                }
+
+                CanonicalTreeParser parentTree = getCommitTree(git, parents[0].getTree().getId());
+
+                List<DiffEntry> changes = git.diff()
+                        .setOldTree(parentTree)
+                        .setNewTree(commitTree)
+                        .setPathFilter(PathFilter.create(path))
+                        .call();
+
+                if (changes.size() == 0){
+                    return THE_FILE_WAS_NOT_CHANGED_IN_THE_COMMIT;
+                }
+
+            }else{
+                return "There was no commit with that message";
+            }
+
+        } catch (Exception e) {
+            return "An error happened with the message:" + e.getMessage();
+        }
+
+        return "";
+    }
+
+    private RuleResult checkCommitWithContentsUpdatedPath(Rule r) {
+
+        RuleResult result = new RuleResult();
+        String message = getReasonIfCheckForFileInCommitFails(r);
+        if (message.isEmpty()){
+            result.setPassed(true);
+        }else{
+            result.setPassed(false);
+            result.setMessage(message);
+        }
+
+        return result;
+    }
+
+    private CanonicalTreeParser getCommitTree(Git git, ObjectId treeId) throws IOException {
+        CanonicalTreeParser commitTree = new CanonicalTreeParser();
+        try( ObjectReader reader = git.getRepository().newObjectReader() ) {
+            commitTree.reset(reader, treeId);
+        }
+        return commitTree;
+    }
+
+    private RevCommit getCommitWithMessageContaining(String contents, boolean caseInsensitive) throws IOException, GitAPIException {
+        Git git = new Git(repo);
+        Iterable<RevCommit> log = git.log().all().call();
+        for (RevCommit commit: log) {
+            if (caseInsensitive) {
+                if (commit.getFullMessage().toLowerCase().contains(contents.toLowerCase())){
+                    return commit;
+                }
+            }
+            else{
+                if (commit.getFullMessage().contains(contents)){
+                    return commit;
+                }
+            }
+        }
+
+        return null;
+    }
+
     private RuleResult checkCommitForPathContains(Rule r, boolean mustBeLastCommit) {
 
-        String path = r.getStringParameter("path");
+        String path = "";
+
+        if (r.details.containsKey("path")) {
+            path = r.getStringParameter("path");
+        }
         String contents = r.getStringParameter("contents");
         boolean caseInsensitive = r.getBooleanParameter("ignore-case");
         RuleResult result = new RuleResult();
@@ -75,10 +184,15 @@ class GitInteractor {
             double latestTimeCommit = 0;
             Git git = new Git(repo);
             RevCommit start = null;
-            Iterable<RevCommit> log = git.log().addPath(path).call();
+            Iterable<RevCommit> log;
+            if (path.isEmpty()) {
+                log = git.log().all().call();
+            }else{
+                log = git.log().addPath(path).call();
+            }
 
             // Collect the commits to check
-            for (RevCommit commit : log) {
+            for (RevCommit commit: log) {
 
                 if (mustBeLastCommit) {
                     if (commit.getCommitTime() > latestTimeCommit) {
@@ -107,7 +221,7 @@ class GitInteractor {
                     }
                 }
             }
-        }catch(GitAPIException e){
+        }catch(GitAPIException | IOException e){
             result = createResultFromException(e);
         }
 

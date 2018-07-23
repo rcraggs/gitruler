@@ -70,6 +70,10 @@ public class Rule {
         return details.containsKey("post-text");
     }
 
+    boolean hasFailureMessage() {
+        return details.containsKey("failure-message");
+    }
+
     String getPreText() {
         return getStringParameter("pre-text");
     }
@@ -77,6 +81,11 @@ public class Rule {
     String getPostText() {
         return getStringParameter("post-text");
     }
+
+    String getFailureMessage() {
+        return getStringParameter("failure-message");
+    }
+
 
     boolean getBooleanParameter(String s) {
         return details.containsKey(s) && (boolean) details.get(s);

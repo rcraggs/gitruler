@@ -134,6 +134,10 @@ public class Command implements Runnable {
         if (rule.hasPostText())
             resultString.append(rule.getPostText());
 
+        if (rule.hasFailureMessage() && !result.hasPassed()){
+            resultString.append(": ").append(rule.getFailureMessage());
+        }
+
         if (result.exceptionOccurred && verbose){
             resultString.append("Exception:");
             resultString.append(result.getExceptionMessage());

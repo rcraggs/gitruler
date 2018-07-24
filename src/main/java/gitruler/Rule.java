@@ -11,6 +11,7 @@ public class Rule {
      * Add a test to the test repo
      * add the title of the rule in getTitle in Rule.
      * Add the checkrule in the GitInterator
+     * Add the documentation
      */
 
     Map<String, Object> details;

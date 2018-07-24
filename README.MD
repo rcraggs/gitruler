@@ -63,6 +63,7 @@ Rules are the checks that will be made on the repository each time the applicati
 
 | Rule Name        | Behaviour           | Mandatory Parameters  | Optional Parameters |
 | ------------- |-------------| -----:| ----: |
+| `text` |  Prints a line in the output containing a header and a row of characters | - | `separator`, `heading`, `width`, `double-space` |
 | `head-exists` | Checks there is a repository with one commit | - | - |
 | `file-tracked-in-head` | Checks that a file is tracked/committed in the last commit | `path` | - |
 | `file-untracked-in-head` | Checks that a file is not tracked/committed in the last commit | `path` | - |

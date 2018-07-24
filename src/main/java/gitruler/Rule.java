@@ -4,6 +4,8 @@ import java.util.Map;
 
 public class Rule {
 
+    public static final String TEXT_RULE_NAME = "text";
+
     /***
      * Adding a new rule:
      * Add a test to the test repo
@@ -44,9 +46,38 @@ public class Rule {
                 return "A commit with a message containing '" + (String) details.get("contents") + "' included a change to '" + (String) details.get("path") + "'";
             case "commit-with-message-doesnt-update-file":
                 return "A commit with a message containing '" + (String) details.get("contents") + "' does not include a change to '" + (String) details.get("path") + "'";
+            case TEXT_RULE_NAME:
+                return createTextRuleOutput();
             default:
                 return "Unknown rule";
         }
+    }
+
+    private String createTextRuleOutput() {
+
+        String heading = (String) details.getOrDefault("heading", "");
+        String separator = (String) details.getOrDefault("separator", "-");
+        int width = (int) details.getOrDefault("width", 100);
+        boolean doubleSpace = (boolean) details.getOrDefault("double-space", false);
+        int counter = heading.length();
+
+        StringBuilder result = new StringBuilder();
+
+        if (doubleSpace){
+            result.append(System.lineSeparator());
+        }
+
+        result.append(heading).append(" ");
+
+        while (result.length() <= width) {
+            result.append(separator);
+        }
+
+        if (doubleSpace){
+            result.append(System.lineSeparator());
+        }
+
+        return result.toString();
     }
 
     String getStringParameter(String key){
@@ -85,7 +116,6 @@ public class Rule {
     String getFailureMessage() {
         return getStringParameter("failure-message");
     }
-
 
     boolean getBooleanParameter(String s) {
         return details.containsKey(s) && (boolean) details.get(s);

@@ -15,7 +15,7 @@ public class Command implements Runnable {
     private static final String ANSI_RED = "\u001B[31m";
     private static final String ANSI_GREEN = "\u001B[32m";
     private static final String ANSI_CYAN = "\u001B[36m";
-    public static final String ANSI_YELLOW = "\u001B[33m";
+    private static final String ANSI_YELLOW = "\u001B[33m";
 
     private static final String CORRECT_TICK = ANSI_GREEN + "[\u2713]" + ANSI_RESET;
     private static final String WRONG_CROSS = ANSI_RED + "[\u2718]" + ANSI_RESET;
@@ -130,6 +130,10 @@ public class Command implements Runnable {
     }
 
     private String createOutputFromRuleAndResult(RuleResult result, Rule rule, boolean skipRemainingRules) {
+
+        if (rule.getRuleName().equals(Rule.TEXT_RULE_NAME)){
+            return rule.getTitle();
+        }
 
         StringBuilder resultString = new StringBuilder();
 

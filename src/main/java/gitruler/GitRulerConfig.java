@@ -11,8 +11,8 @@ import java.util.*;
 
 class GitRulerConfig {
 
-    List<Rule> rules = new ArrayList<>();
-    Map<String, String> setupFiles= new HashMap<>();
+    private List<Rule> rules = new ArrayList<>();
+    private Map<String, String> setupFiles= new HashMap<>();
 
     GitRulerConfig(String path) throws IOException {
 

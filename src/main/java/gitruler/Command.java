@@ -71,26 +71,7 @@ public class Command implements Runnable {
         }
 
         try {
-            // If this is the first time, then create the setup files
-            if (!Files.exists(Paths.get(repositoryPath + File.separator + ".gitruler"),
-                    LinkOption.NOFOLLOW_LINKS)) {
-
-                for (String path : config.getSetupFiles().keySet()) {
-                    String content = config.getSetupFiles().get(path);
-                    Path newFilePath = Paths.get(repositoryPath + File.separator + path);
-                    try {
-                        Files.createDirectories(newFilePath.getParent());
-                        Files.createFile(newFilePath);
-                        Files.write(Paths.get(repositoryPath + File.separator + path), content.getBytes());
-                    }catch(FileAlreadyExistsException e){
-                        if (verbose) {
-                            System.out.println("Warning: I was asked to create a file that already exists: " + newFilePath.toString() );
-                        }
-                    }
-                }
-
-                Files.write(Paths.get(repositoryPath + File.separator + ".gitruler"), "setup done".getBytes());
-            }
+            runFileSetup();
         } catch (IOException e) {
             System.out.println("Couldn't create setup files");
             if (verbose){
@@ -113,6 +94,38 @@ public class Command implements Runnable {
 
         if (skipRemainingRules){
             System.out.println(ANSI_CYAN + "Skipped rules because a critical rule didn't pass" + ANSI_RESET);
+        }
+    }
+
+    private void runFileSetup() throws IOException {
+
+        // If this is the first time, then create the setup files
+        if (!Files.exists(Paths.get(repositoryPath + File.separator + ".gitruler"),
+                LinkOption.NOFOLLOW_LINKS)) {
+
+            for (String path : config.getSetupFiles().keySet()) {
+
+                String content = config.getSetupFiles().get(path);
+                Path newFilePath = Paths.get(repositoryPath + File.separator + path);
+
+                try {
+                    Files.createDirectories(newFilePath.getParent());
+
+                    if (!Files.exists(newFilePath)) {
+                        Files.write(newFilePath, content.getBytes(), StandardOpenOption.CREATE_NEW);
+                    }else{
+                        Files.write(newFilePath, content.getBytes(), StandardOpenOption.APPEND);
+                    }
+
+
+                }catch(FileAlreadyExistsException e){
+                    if (verbose) {
+                        System.out.println("Warning: I was asked to create a file that already exists: " + newFilePath.toString() );
+                    }
+                }
+            }
+
+            Files.write(Paths.get(repositoryPath + File.separator + ".gitruler"), "setup done".getBytes());
         }
     }
 

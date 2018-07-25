@@ -117,7 +117,6 @@ public class Command implements Runnable {
                         Files.write(newFilePath, content.getBytes(), StandardOpenOption.APPEND);
                     }
 
-
                 }catch(FileAlreadyExistsException e){
                     if (verbose) {
                         System.out.println("Warning: I was asked to create a file that already exists: " + newFilePath.toString() );

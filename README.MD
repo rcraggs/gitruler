@@ -74,6 +74,7 @@ Rules are the checks that will be made on the repository each time the applicati
 | `any-commit-message-contains` | Check that there is a commit that contains a phrase | `contents` | `ignore-case` |
 | `commit-with-message-updated-file` | Check that a commit whose message contains a phrase had an update to a file| `path`, `contents` | `ignore-case` |
 | `commit-with-message-doesnt-update-file` | Check that a commit whose message contains a phrase does not update a file| `path`, `contents` | `ignore-case` |
+| `ignored` | Check that a file at a given path would be ignored by git | `path` | - |
 
 #### Common Rule Options
 

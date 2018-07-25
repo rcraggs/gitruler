@@ -49,6 +49,8 @@ public class Rule {
                 return "A commit with a message containing '" + (String) details.get("contents") + "' does not include a change to '" + (String) details.get("path") + "'";
             case TEXT_RULE_NAME:
                 return createTextRuleOutput();
+            case "ignored":
+                return "Git ignores '" + (String) details.get("path") +"'";
             default:
                 return "Unknown rule";
         }

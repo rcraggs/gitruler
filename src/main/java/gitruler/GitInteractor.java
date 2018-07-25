@@ -1,6 +1,7 @@
 package gitruler;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.*;
@@ -13,6 +14,7 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 
 import java.io.*;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -20,16 +22,22 @@ import java.util.Scanner;
 
 class GitInteractor {
 
-    public static final String THE_FILE_WAS_NOT_CHANGED_IN_THE_COMMIT = "The file was not changed in the commit";
+    private static final String THE_FILE_WAS_NOT_CHANGED_IN_THE_COMMIT = "The file was not changed in the commit";
+    private static final String DUMMY_CONTENT = "DUMMY CONTENT";
+    private static final String GIT_DIR_NAME = ".git";
     private Repository repo;
+    private String repositoryPath;
 
     GitInteractor(String path) throws IOException {
 
         FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
 
         // if the path doesn't already have .git on it, add it
-        if (!path.endsWith(".git")){
-            path = path + File.separator + ".git";
+        if (!path.endsWith(GIT_DIR_NAME)){
+            repositoryPath = path;
+            path = path + File.separator + GIT_DIR_NAME;
+        }else{
+            repositoryPath = path.substring(0,path.indexOf(GIT_DIR_NAME));
         }
 
         repo = repositoryBuilder.setGitDir(new File(path))
@@ -60,12 +68,88 @@ class GitInteractor {
                 return checkCommitWithContentsUpdatedPath(r);
             case "commit-with-message-doesnt-update-file":
                 return checkCommitWithContentsDoesntUpdatePath(r);
+            case "ignored":
+                return gitWouldIgnore(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    private RuleResult gitWouldIgnore(Rule r) {
+
+
+        RuleResult result = new RuleResult();
+        Path backupPath = null;
+
+        Path path = Paths.get(repositoryPath + File.separator + r.getStringParameter("path"));
+        String pathStringValue = r.getStringParameter("path");
+
+        // If the path exists, back it up and delete it
+        if (Files.exists(path)){
+
+            try {
+                File tempFile = File.createTempFile("ignore-test-backup", "bak");
+                tempFile.deleteOnExit();
+                backupPath = tempFile.toPath();
+                Files.copy(path, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                Files.delete(path);
+
+            } catch (IOException e) {
+                result.setPassed(false);
+                result.setMessage("Tried to test ignoring a file that could not be backed up for the test");
+                return result;
+            }
+        }
+
+        // Create a file
+        try {
+            Files.write(path, DUMMY_CONTENT.getBytes(), StandardOpenOption.CREATE_NEW);
+        } catch (IOException e) {
+            result.setPassed(false);
+            result.setMessage("Tried to test ignoring a file that could not be created");
+            return result;
+        }
+
+        // Check if this appears in the diff
+        Git git = new Git(repo);
+        try {
+            Status status = git.status().call();
+
+            // The path should not be in added or modified lists
+            result.setPassed(!status.getAdded().contains(pathStringValue)
+                    && !status.getModified().contains(pathStringValue)
+                    && !status.getChanged().contains(pathStringValue)
+                    && !status.getUntracked().contains(pathStringValue));
+
+        } catch (GitAPIException e) {
+            result.setPassed(false);
+            result.setMessage("Failed to check if a file is ignored because I couldn't do a status call");
+            return result;
+        }
+
+        // Delete the file
+        if (backupPath == null){
+            try {
+                Files.delete(path);
+            } catch (IOException e) {
+                result.setPassed(false);
+                result.setMessage("Failed to check if a file is ignored because I couldn't remove the temporary file");
+                return result;
+            }
+        }else{
+            try {
+                Files.copy(backupPath, path, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                result.setPassed(false);
+                result.setMessage("Failed to check if a file is ignored because I couldn't restore the original file");
+                return result;
+            }
+        }
+
+        return result;
     }
 
     private RuleResult checkCommitWithContentsDoesntUpdatePath(Rule r) {
@@ -382,4 +466,8 @@ class GitInteractor {
         result.exceptionOccurred = true;
         return result;
     }
+
+
+
+
 }

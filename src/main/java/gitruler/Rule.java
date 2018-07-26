@@ -51,6 +51,8 @@ public class Rule {
                 return createTextRuleOutput();
             case "ignored":
                 return "Git ignores '" + (String) details.get("path") +"'";
+            case "file-tracked-in-branch":
+                return "The file is tracked " + details.get("path") + " in branch " + details.get("path");
             default:
                 return "Unknown rule";
         }

@@ -1,11 +1,16 @@
 package gitruler;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.errors.CorruptObjectException;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -15,10 +20,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
 class GitInteractor {
 
@@ -70,12 +72,51 @@ class GitInteractor {
                 return checkCommitWithContentsDoesntUpdatePath(r);
             case "ignored":
                 return gitWouldIgnore(r);
+            case "file-tracked-in-branch":
+                return checkFileTrackedInBranch(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    private RuleResult checkFileTrackedInBranch(Rule r) {
+
+        String branchName = (String) r.details.get("branch");
+        String path = (String) r.getStringParameter("path");
+
+        RuleResult result = new RuleResult();
+        result.setPassed(false);
+
+        Git git = new Git(repo);
+
+        try {
+
+            // todo: give a different error message when the branch does not exists
+            RevWalk walk = new RevWalk(repo);
+
+            Ref branch = git.branchList().call().stream().filter(b -> b.getName().contains(branchName)).findFirst().get();
+            RevCommit commit = walk.parseCommit(branch.getObjectId());
+            TreeWalk treeWalk = new TreeWalk(repo);
+
+            treeWalk.addTree(commit.getTree());
+            treeWalk.setRecursive(true);
+            treeWalk.setFilter(PathFilter.create(path));
+            while (treeWalk.next()) {
+                if (treeWalk.getPathString() != null){
+                    ObjectId objectId = treeWalk.getObjectId(0);
+                    // If an id is passed in check that it matches, otherwise return true anyway
+                    result.setPassed(true);
+                }
+            }
+        }catch (Exception e) {
+            result.setPassed(false);
+            result.setMessage("Failed because an error occurred getting the branch");
+        }
+
+        return result;
     }
 
     private RuleResult gitWouldIgnore(Rule r) {

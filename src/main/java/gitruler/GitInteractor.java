@@ -23,6 +23,7 @@ class GitInteractor {
     private static final String DUMMY_CONTENT = "DUMMY CONTENT";
     private static final String GIT_DIR_NAME = ".git";
     private Repository repo;
+    private GitFunctions gitFunctions;
     private String repositoryPath;
 
     GitInteractor(String path) throws IOException {
@@ -40,6 +41,8 @@ class GitInteractor {
         repo = repositoryBuilder.setGitDir(new File(path))
                 .setMustExist(true)
                 .build();
+
+        gitFunctions = new GitFunctions(repo);
     }
 
     RuleResult checkRule(Rule r) {
@@ -113,19 +116,10 @@ class GitInteractor {
 
     ObjectId getPathId(String branchName, String path) throws Exception {
 
-        Git git = new Git(repo);
-        RevWalk walk = new RevWalk(repo);
-
-        Optional<Ref> branchOpt = git.branchList().call().stream().filter(b -> b.getName().contains(branchName)).findFirst();
-        Ref branch;
-
-        if (branchOpt.isPresent()){
-            branch = branchOpt.get();
-        }else{
-            throw new Exception("Could not find branch: " + branchName);
-        }
+        Ref branch = gitFunctions.getBranchRef(branchName);
 
         // Set up tree for searching
+        RevWalk walk = new RevWalk(repo);
         RevCommit lastCommit = walk.parseCommit(branch.getObjectId());
         TreeWalk treeWalk = new TreeWalk(repo);
         treeWalk.addTree(lastCommit.getTree());

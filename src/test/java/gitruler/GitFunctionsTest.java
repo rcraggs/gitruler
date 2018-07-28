@@ -4,6 +4,8 @@ import gitruler.exceptions.BranchNotFoundException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class GitFunctionsTest {
 
     private static GitFunctions gf;
+    private static Repository repo;
 
     @BeforeAll
     static void setup() {
@@ -30,11 +33,13 @@ class GitFunctionsTest {
             String repoPath = props.getProperty("repo-path");
 
             FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
-            Repository repo = repositoryBuilder.setGitDir(new File(repoPath))
+            repo = repositoryBuilder.setGitDir(new File(repoPath))
                     .setMustExist(true)
                     .build();
 
             gf = new GitFunctions(repo);
+
+
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -42,11 +47,11 @@ class GitFunctionsTest {
     }
 
     @Test
-    void getBranchRefExists() {
+    void getBranchRefExistsTest() {
 
         try {
-            Ref branchRef = gf.getBranchRef("branch-1");
-            assertTrue(branchRef != ObjectId.zeroId() && branchRef != null);
+            RevCommit branchCommit = gf.getBranchCommit("branch-1");
+            assertTrue(branchCommit != ObjectId.zeroId() && branchCommit != null);
         } catch (BranchNotFoundException e) {
             fail("Failed to find branch");
         }
@@ -54,11 +59,11 @@ class GitFunctionsTest {
 
 
     @Test
-    void getBranchRefMaster() {
+    void getBranchRefMasterTest() {
 
         try {
-            Ref branchRef = gf.getBranchRef("master");
-            assertTrue(branchRef != ObjectId.zeroId() && branchRef != null);
+            RevCommit branchCommit = gf.getBranchCommit("master");
+            assertTrue(branchCommit != ObjectId.zeroId() && branchCommit != null);
         } catch (BranchNotFoundException e) {
             fail("Failed to find branch");
         }
@@ -66,13 +71,111 @@ class GitFunctionsTest {
 
 
     @Test
-    void getBranchRefNotExists() {
+    void getBranchRefNotExistsTest() {
 
         try {
-            gf.getBranchRef("unknown");
+            gf.getBranchCommit("unknown");
             fail("Branch was incorrectly found");
         } catch (BranchNotFoundException e) {
             assert(e.getMessage().contains("unknown"));
         }
     }
+
+    @Test
+    void getTreeIdFromPathTest() {
+
+        RevWalk walk = new RevWalk(repo);
+        try {
+            RevCommit commit = walk.parseCommit(ObjectId.fromString("069eeb05253827a6d7d281f3e51665781e5c3f37"));
+            ObjectId treeId = gf.getTreeIdFromPath("file1.txt", commit);
+            assertTrue(treeId != ObjectId.zeroId() && treeId != null);
+        } catch (IOException e) {
+            fail("Failed to get commit");
+        }
+    }
+
+    @Test
+    void getTreeIdFromPathIncorrectPathTest() {
+
+        RevWalk walk = new RevWalk(repo);
+        try {
+            RevCommit commit = walk.parseCommit(ObjectId.fromString("069eeb05253827a6d7d281f3e51665781e5c3f37"));
+            ObjectId treeId = gf.getTreeIdFromPath("file2.txt", commit);
+            assertFalse(treeId != ObjectId.zeroId() && treeId != null);
+        } catch (IOException e) {
+            fail("Commit was found when it should not have been");
+        }
+    }
+
+    @Test
+    void getTreeIdFromPathIncorrectCommitIdTest() {
+
+        RevWalk walk = new RevWalk(repo);
+        try {
+            RevCommit commit = walk.parseCommit(ObjectId.fromString("0c895c4ef98ee8184ea7bc619e56c5ce31948628"));
+            ObjectId treeId = gf.getTreeIdFromPath("file2.txt", commit);
+            assertFalse(treeId != ObjectId.zeroId() && treeId != null);
+        } catch (IOException e) {
+            fail("Commit was found when it should not have been");
+        }
+    }
+
+    @Test
+    void getFileContentsValidTreeTest() throws IOException {
+
+        String contents = gf.getFileContents(ObjectId.fromString("67ba9998ffaa6edad2d84287800d9efd1941409c"));
+        assertTrue(contents.contains("updated"));
+    }
+
+    @Test
+    void getCommitWithMessageContainingTest() {
+
+        assertNotNull(gf.getCommitWithMessageContaining("FILE1", true));
+        assertNull(gf.getCommitWithMessageContaining("FILE1", false));
+        assertNotNull(gf.getCommitWithMessageContaining("add file in branch 1", false), "Check commit in branch");
+    }
+
+    @Test
+    void isCommitOrphanTest() throws IOException {
+
+        RevWalk walk = new RevWalk(repo);
+        RevCommit commit = walk.parseCommit(ObjectId.fromString("0c895c4ef98ee8184ea7bc619e56c5ce31948628"));
+        assertTrue(gf.isCommitOrphan(commit));
+        commit = walk.parseCommit(ObjectId.fromString("069eeb05253827a6d7d281f3e51665781e5c3f37"));
+        assertFalse(gf.isCommitOrphan(commit));
+
+    }
+
+    @Test
+    void wasPathUpdatedInCommitSimpleTrueTest() throws IOException {
+
+        RevWalk walk = new RevWalk(repo);
+        RevCommit commit = walk.parseCommit(ObjectId.fromString("892d8e86ce4d04618e46309914fc6d8666dbed49"));
+        assertTrue(gf.wasPathUpdatedInCommit("file1.txt", commit));
+    }
+
+    @Test
+    void wasPathUpdatedInFirstCommitTest() throws IOException {
+
+        RevWalk walk = new RevWalk(repo);
+        RevCommit commit = walk.parseCommit(ObjectId.fromString("0c895c4ef98ee8184ea7bc619e56c5ce31948628"));
+        assertTrue(gf.wasPathUpdatedInCommit("README.MD", commit));
+    }
+
+    @Test
+    void wasPathUpdatedInFirstCommitFailTest() throws IOException {
+
+        RevWalk walk = new RevWalk(repo);
+        RevCommit commit = walk.parseCommit(ObjectId.fromString("0c895c4ef98ee8184ea7bc619e56c5ce31948628"));
+        assertFalse(gf.wasPathUpdatedInCommit("file1.txt", commit));
+    }
+
+    @Test
+    void wasPathUpdatedInCommitThereButNotUpdatedTest() throws IOException {
+
+        RevWalk walk = new RevWalk(repo);
+        RevCommit commit = walk.parseCommit(ObjectId.fromString("069eeb05253827a6d7d281f3e51665781e5c3f37"));
+        assertFalse(gf.wasPathUpdatedInCommit("README.MD", commit));
+    }
+
 }

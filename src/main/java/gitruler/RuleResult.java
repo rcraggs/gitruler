@@ -11,6 +11,14 @@ public class RuleResult {
     private String exceptionTrace = "";
     public boolean exceptionOccurred;
 
+    public RuleResult(boolean defaultPassed) {
+        passed = defaultPassed;
+    }
+
+    public RuleResult() {
+        this(false);
+    }
+
     void setPassed(boolean passed) {
         this.passed = passed;
     }

@@ -15,10 +15,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
 class GitInteractor {
 
@@ -72,6 +69,8 @@ class GitInteractor {
                 return gitWouldIgnore(r);
             case "file-tracked-in-branch":
                 return checkFileTrackedInBranch(r);
+            case "file-contains-in-branch":
+                return checkFileContainsInBranch(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
@@ -80,38 +79,82 @@ class GitInteractor {
         }
     }
 
-    private RuleResult checkFileTrackedInBranch(Rule r) {
+    private RuleResult checkFileContainsInBranch(Rule r) {
 
-        String branchName = (String) r.details.get("branch");
-        String path = (String) r.getStringParameter("path");
+        String path = r.getStringParameter("path");
+        String branch = r.getStringParameter("branch");
+        String contents = r.getStringParameter("contents");
 
         RuleResult result = new RuleResult();
         result.setPassed(false);
 
+        try {
+            ObjectId id = getPathId(branch, path);
+
+            if (id != null && id != ObjectId.zeroId() ) {
+                ObjectLoader loader = repo.open(id);
+                InputStream in = loader.openStream();
+                Scanner s = new Scanner(in).useDelimiter("\\A");
+                String fileContents = s.hasNext() ? s.next() : "";
+                result.setPassed(fileContents.toLowerCase().contains(contents.toLowerCase()));
+            }
+
+        } catch (Exception e) {
+            if (e.getMessage().startsWith("Could not find branch")) {
+                result.setPassed(false);
+                result.setMessage(e.getMessage());
+            }else{
+                result = createResultFromException(e);
+            }
+        }
+
+        return result;
+    }
+
+    ObjectId getPathId(String branchName, String path) throws Exception {
+
         Git git = new Git(repo);
+        RevWalk walk = new RevWalk(repo);
+
+        Optional<Ref> branchOpt = git.branchList().call().stream().filter(b -> b.getName().contains(branchName)).findFirst();
+        Ref branch;
+
+        if (branchOpt.isPresent()){
+            branch = branchOpt.get();
+        }else{
+            throw new Exception("Could not find branch: " + branchName);
+        }
+
+        // Set up tree for searching
+        RevCommit lastCommit = walk.parseCommit(branch.getObjectId());
+        TreeWalk treeWalk = new TreeWalk(repo);
+        treeWalk.addTree(lastCommit.getTree());
+        treeWalk.setRecursive(true);
+        treeWalk.setFilter(PathFilter.create(path));
+
+        while (treeWalk.next()) {
+            if (treeWalk.getPathString() != null){
+                return treeWalk.getObjectId(0);
+            }
+        }
+
+        return null;
+    }
+
+    private RuleResult checkFileTrackedInBranch(Rule r) {
+
+        String branchName = r.getStringParameter("branch");
+        String path = r.getStringParameter("path");
+        RuleResult result = new RuleResult();
+        result.setPassed(false);
 
         try {
-
-            // todo: give a different error message when the branch does not exists
-            RevWalk walk = new RevWalk(repo);
-
-            Ref branch = git.branchList().call().stream().filter(b -> b.getName().contains(branchName)).findFirst().get();
-            RevCommit commit = walk.parseCommit(branch.getObjectId());
-            TreeWalk treeWalk = new TreeWalk(repo);
-
-            treeWalk.addTree(commit.getTree());
-            treeWalk.setRecursive(true);
-            treeWalk.setFilter(PathFilter.create(path));
-            while (treeWalk.next()) {
-                if (treeWalk.getPathString() != null){
-                    ObjectId objectId = treeWalk.getObjectId(0);
-                    // If an id is passed in check that it matches, otherwise return true anyway
-                    result.setPassed(true);
-                }
+            ObjectId pathId = getPathId(branchName, path);
+            if (pathId != ObjectId.zeroId()){
+                result.setPassed(true);
             }
-        }catch (Exception e) {
-            result.setPassed(false);
-            result.setMessage("Failed because an error occurred getting the branch");
+        } catch (Exception e) {
+            result = createResultFromException(e);
         }
 
         return result;
@@ -306,7 +349,6 @@ class GitInteractor {
             List<RevCommit> commits = new ArrayList<>();
             double latestTimeCommit = 0;
             Git git = new Git(repo);
-            RevCommit start = null;
             Iterable<RevCommit> log;
             if (path.isEmpty()) {
                 log = git.log().all().call();
@@ -505,8 +547,4 @@ class GitInteractor {
         result.exceptionOccurred = true;
         return result;
     }
-
-
-
-
 }

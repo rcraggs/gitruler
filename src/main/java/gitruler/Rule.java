@@ -53,6 +53,8 @@ public class Rule {
                 return "Git ignores '" + (String) details.get("path") +"'";
             case "file-tracked-in-branch":
                 return "The file is tracked " + details.get("path") + " in branch " + details.get("path");
+            case "file-contains-in-branch":
+                return "The file: " + (String) details.get("path") + " contains the text '" + (String) details.get("contents") + "' in the branch '" + getStringParameter("branch") + "'";
             default:
                 return "Unknown rule";
         }

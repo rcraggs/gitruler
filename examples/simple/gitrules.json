@@ -19,6 +19,6 @@
     { "rule": "commit-with-message-doesnt-update-file", "contents": "ads", "path":"folder/a"},
     { "rule": "ignored", "path":"ignored.bak"},
     { "rule": "file-tracked-in-branch" , "path": "file-in-branch-1.txt", "branch":"branch-1"},
-    { "rule": "file-contains-in-branch", "branch":"another-1", "path" : "blah.txt", "contents":"blah", "ignore-case":true},
+    { "rule": "file-contains-in-branch", "branch":"branch-1", "path" : "file-in-branch-1.txt", "contents":"second line", "ignore-case":true}
   ]
 }

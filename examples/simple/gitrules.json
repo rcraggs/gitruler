@@ -15,6 +15,10 @@
     { "rule": "any-commit-message-for-file-contains", "path":"folder/c", "contents":"COMMIT", "ignore-case":true},
     { "rule": "last-commit-message-for-file-contains", "path":"folder/c", "contents":"caterpillar", "ignore-case":false},
     { "rule": "last-commit-message-for-file-contains", "path":"folder/z", "contents":"ads", "ignore-case":false},
-    { "rule": "commit-with-message-updated-file", "contents": "ads", "path":"folder/a"}
+    { "rule": "commit-with-message-updated-file", "contents": "ads", "path":"folder/z"},
+    { "rule": "commit-with-message-doesnt-update-file", "contents": "ads", "path":"folder/a"},
+    { "rule": "ignored", "path":"ignored.bak"},
+    { "rule": "file-tracked-in-branch" , "path": "file-in-branch-1.txt", "branch":"branch-1"},
+    { "rule": "file-contains-in-branch", "branch":"another-1", "path" : "blah.txt", "contents":"blah", "ignore-case":true},
   ]
 }

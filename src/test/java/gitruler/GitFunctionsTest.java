@@ -1,6 +1,7 @@
 package gitruler;
 
 import gitruler.exceptions.BranchNotFoundException;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -212,4 +213,14 @@ class GitFunctionsTest {
         String contents = gf.getContentsOfFileInCommit(commit, "file1.txt");
         assertTrue(!contents.contains("updated"), "Check folder commits are correctly checked");
     }
+
+    @Test
+    void getCommitMessageForFileContainsString() throws IOException, GitAPIException {
+        assertTrue(gf.anyCommitMessagesForFileContainsString("file1.txt", "MULTIPLE", true));
+        assertFalse(gf.anyCommitMessagesForFileContainsString("file1.txt", "MULTIPLE", false));
+        assertTrue(gf.anyCommitMessagesForFileContainsString("file1.txt", "add file1", true));
+        assertFalse(gf.anyCommitMessagesForFileContainsString("file1.txt", "ADD README", true));
+    }
+
+
 }

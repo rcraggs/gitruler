@@ -127,4 +127,46 @@ public class Rule {
     boolean getBooleanParameter(String s) {
         return details.containsKey(s) && (boolean) details.get(s);
     }
+
+    /**
+     * Get the path or empty string if there is none
+     * @return as described above.
+     */
+    String getPath() {
+        return getStringParamOrDefault("path", "");
+    }
+
+    /**
+     * Get the branch or empty string if there is none
+     * @return as described above.
+     */
+    String getBranch() {
+        return getStringParamOrDefault("branch", "");
+    }
+
+    boolean getIgnoreCase() {
+        return (boolean) details.getOrDefault("ignore-case", false);
+    }
+
+    /**
+     * Get the contents of empty string if there is none
+     * @return as described above.
+     */
+    String getContents() {
+        return getStringParamOrDefault("contents", "");
+    }
+
+    /**
+     * get a value out of a rule
+     * @param key They key to the value
+     * @param defaultValue if the key is not there
+     * @return the string value.
+     */
+    private String getStringParamOrDefault(String key, String defaultValue) {
+        if (details.containsKey(key)){
+            return (String) details.get(key);
+        }else{
+            return defaultValue;
+        }
+    }
 }

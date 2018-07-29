@@ -265,8 +265,73 @@ class GitFunctions {
         }
     }
 
+    /**
+     * Get the contents of a file as it was at the point in time a commit occurred
+     * @param commit The commit to check
+     * @param path The file to get the contents of
+     * @return The file contents
+     * @throws IOException Git exceptions
+     * @throws NullPointerException Git exceptions
+     */
     String getContentsOfFileInCommit(RevCommit commit, String path) throws IOException, NullPointerException {
         ObjectId treeIfOfFileInCommit = getTreeIdFromPath(path, commit);
         return getFileContents(treeIfOfFileInCommit);
+    }
+
+    boolean anyCommitMessagesForFileContainsString(String path, String contents, boolean caseInsensitive) throws IOException, GitAPIException {
+
+        Git git = new Git(repo);
+        Iterable<RevCommit> log = git.log().addPath(path).call();
+        return doesCommitListIncludeContentIsAMessage(contents, caseInsensitive, log);
+    }
+
+    boolean anyCommitMessagesContainsString(String contents, boolean caseInsensitive) throws IOException, GitAPIException {
+
+        Git git = new Git(repo);
+        Iterable<RevCommit> log = git.log().all().call();
+        return doesCommitListIncludeContentIsAMessage(contents, caseInsensitive, log);
+    }
+
+    boolean lastCommitMessageForFileContainsString(String path, String contents, boolean caseInsensitive) throws IOException, GitAPIException {
+        RevCommit commit = getLatestCommitForPath(path);
+
+        if (caseInsensitive) {
+            return commit.getFullMessage().toLowerCase().contains(contents.toLowerCase());
+        }else{
+            return commit.getFullMessage().contains(contents);
+        }
+    }
+
+    private RevCommit getLatestCommitForPath(String path) throws GitAPIException {
+        Git git = new Git(repo);
+        Iterable<RevCommit> log = git.log().addPath(path).call();
+        RevCommit latestCommit = null;
+
+        double latestTimeCommit = 0;
+        for (RevCommit commit: log) {
+            if (commit.getCommitTime() > latestTimeCommit) {
+                latestTimeCommit = commit.getCommitTime();
+                latestCommit = commit;
+            }
+        }
+
+        return latestCommit;
+    }
+
+    private Boolean doesCommitListIncludeContentIsAMessage(String contents, boolean caseInsensitive, Iterable<RevCommit> log) {
+
+        for (RevCommit commit : log) {
+            if (caseInsensitive) {
+                if (commit.getFullMessage().toLowerCase().contains(contents.toLowerCase())){
+                    return true;
+                }
+            }
+            else{
+                if (commit.getFullMessage().contains(contents)){
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 }

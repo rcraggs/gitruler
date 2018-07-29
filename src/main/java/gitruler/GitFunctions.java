@@ -157,7 +157,7 @@ class GitFunctions {
      * @throws IOException the test failed
      * @throws GitAPIException the test failed
      */
-    boolean isPathUpdatedByCommit(String path, RevCommit commit) throws IOException, GitAPIException {
+    private boolean doesDiffWithParentContainCommit(String path, RevCommit commit) throws IOException, GitAPIException {
 
         Git git = new Git(repo);
         CanonicalTreeParser commitTree = getCommitTreeParser(commit.getTree().getId());
@@ -196,7 +196,18 @@ class GitFunctions {
     }
 
     /**
-     * Check whether a path exists in the repo at the time of a commit
+     * Check whether a path exists in the repo at the time of a commit.
+     * @param commit the commit to check against
+     * @param path the path of the file to check
+     * @return true if that file existed at that commit
+     * @throws IOException Git error
+     */
+    boolean pathExistsInCommit(RevCommit commit, String path) throws IOException {
+        return pathExistsInCommit(commit, path, "");
+    }
+
+    /**
+     * Check whether a path exists in the repo at the time of a commit with a certain hash id
      * @param commit the commit to check against
      * @param path the path of the file to check
      * @param id the sha1 hash of the file contents or empty if we don't care
@@ -239,18 +250,23 @@ class GitFunctions {
      * @param commit The commit to check
      * @return True if it was changed.
      */
-    boolean wasPathUpdatedInCommit(String path, RevCommit commit) {
+    boolean isPathUpdatedInCommit(String path, RevCommit commit) {
 
         try {
             if (isCommitOrphan(commit)) {
                 // This was the first commit, we can just check if the path exists
                 return pathExistsInCommit(commit, path, "");
             } else {
-                return isPathUpdatedByCommit(path, commit);
+                return doesDiffWithParentContainCommit(path, commit);
 
             }
         }catch(IOException | GitAPIException e) {
             return false;
         }
+    }
+
+    String getContentsOfFileInCommit(RevCommit commit, String path) throws IOException, NullPointerException {
+        ObjectId treeIfOfFileInCommit = getTreeIdFromPath(path, commit);
+        return getFileContents(treeIfOfFileInCommit);
     }
 }

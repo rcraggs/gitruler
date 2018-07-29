@@ -1,12 +1,16 @@
 package gitruler;
 
 import gitruler.exceptions.BranchNotFoundException;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -151,7 +156,7 @@ class GitFunctionsTest {
 
         RevWalk walk = new RevWalk(repo);
         RevCommit commit = walk.parseCommit(ObjectId.fromString("892d8e86ce4d04618e46309914fc6d8666dbed49"));
-        assertTrue(gf.wasPathUpdatedInCommit("file1.txt", commit));
+        assertTrue(gf.isPathUpdatedInCommit("file1.txt", commit));
     }
 
     @Test
@@ -159,7 +164,7 @@ class GitFunctionsTest {
 
         RevWalk walk = new RevWalk(repo);
         RevCommit commit = walk.parseCommit(ObjectId.fromString("0c895c4ef98ee8184ea7bc619e56c5ce31948628"));
-        assertTrue(gf.wasPathUpdatedInCommit("README.MD", commit));
+        assertTrue(gf.isPathUpdatedInCommit("README.MD", commit));
     }
 
     @Test
@@ -167,7 +172,7 @@ class GitFunctionsTest {
 
         RevWalk walk = new RevWalk(repo);
         RevCommit commit = walk.parseCommit(ObjectId.fromString("0c895c4ef98ee8184ea7bc619e56c5ce31948628"));
-        assertFalse(gf.wasPathUpdatedInCommit("file1.txt", commit));
+        assertFalse(gf.isPathUpdatedInCommit("file1.txt", commit));
     }
 
     @Test
@@ -175,7 +180,36 @@ class GitFunctionsTest {
 
         RevWalk walk = new RevWalk(repo);
         RevCommit commit = walk.parseCommit(ObjectId.fromString("069eeb05253827a6d7d281f3e51665781e5c3f37"));
-        assertFalse(gf.wasPathUpdatedInCommit("README.MD", commit));
+        assertFalse(gf.isPathUpdatedInCommit("README.MD", commit));
     }
 
+    @Test
+    void pathExistsInCommitTest() throws IOException {
+
+        RevCommit commit =  gf.getCommitFromRefString(Constants.HEAD);
+        assertTrue(gf.pathExistsInCommit(commit, "file1.txt"));
+
+        commit =  gf.getCommitFromRefString("0c895c4ef98ee8184ea7bc619e56c5ce31948628");
+        assertFalse((gf.pathExistsInCommit(commit, "file1.txt")));
+    }
+
+    @Test
+    void pathExistsInCommitWithIdTest() throws IOException {
+
+        RevCommit commit =  gf.getCommitFromRefString(Constants.HEAD);
+        assertTrue(gf.pathExistsInCommit(commit, "file1.txt", "67ba9998ffaa6edad2d84287800d9efd1941409c"));
+
+        assertFalse((gf.pathExistsInCommit(commit, "file1.txt", "incorrectID")));
+    }
+
+    @Test
+    void getContentsOfFileInCommitTest() throws IOException {
+
+        RevCommit commit =  gf.getCommitFromRefString("892d8e86ce4d04618e46309914fc6d8666dbed49");
+        assertEquals(gf.getContentsOfFileInCommit(commit, "file2.txt"),"file2"+System.lineSeparator());
+
+        commit =  gf.getCommitFromRefString("069eeb05253827a6d7d281f3e51665781e5c3f37");
+        String contents = gf.getContentsOfFileInCommit(commit, "file1.txt");
+        assertTrue(!contents.contains("updated"), "Check folder commits are correctly checked");
+    }
 }

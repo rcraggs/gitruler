@@ -85,3 +85,4 @@ The following options can be added to any rule to affect its behaviour or the ou
 - `failure-message`: A specific message if the rule fails. e.g. "Did you remember to commit the file?"
 - `alternative-title`: An alternative description of the rule to appear in the output. e.g. "You created the repository"
 - `stop-on-fail`: Causes all following rules to be skipped if this one fails. Good if other rules make no sense if a prior one fails.
+- `score-if-correct`: Allocate a score for this rule which will be shown in the output. The final score will also be shown if there is one.

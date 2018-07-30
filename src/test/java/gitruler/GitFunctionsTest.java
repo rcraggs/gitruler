@@ -44,8 +44,6 @@ class GitFunctionsTest {
                     .build();
 
             gf = new GitFunctions(repo);
-
-
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -221,6 +219,4 @@ class GitFunctionsTest {
         assertTrue(gf.anyCommitMessagesForFileContainsString("file1.txt", "add file1", true));
         assertFalse(gf.anyCommitMessagesForFileContainsString("file1.txt", "ADD README", true));
     }
-
-
 }

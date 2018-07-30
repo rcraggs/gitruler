@@ -134,12 +134,11 @@ class GitInteractor {
         RuleResult result = new RuleResult();
         Path backupPath = null;
 
-        Path path = Paths.get(repositoryPath + File.separator + r.getStringParameter("path"));
+        Path path = Paths.get(repositoryPath + File.separator + r.getPath());
         String pathStringValue = r.getStringParameter("path");
 
         // If the path exists, back it up and delete it
         if (Files.exists(path)){
-
             try {
                 File tempFile = File.createTempFile("ignore-test-backup", "bak");
                 tempFile.deleteOnExit();
@@ -205,10 +204,7 @@ class GitInteractor {
     private RuleResult checkCommitWithContentsDoesntUpdatePath(Rule r) {
 
         RuleResult result = new RuleResult();
-
-        boolean caseInsensitive = r.getBooleanParameter("ignore-case");
-
-        RevCommit commit = gitFunctions.getCommitWithMessageContaining(r.getContents(), caseInsensitive);
+        RevCommit commit = gitFunctions.getCommitWithMessageContaining(r.getContents(), r.getIgnoreCase());
 
         if (commit == null){
             result.setMessage("No commit with that message was found.");

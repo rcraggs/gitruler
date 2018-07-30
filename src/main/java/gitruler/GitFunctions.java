@@ -282,14 +282,14 @@ class GitFunctions {
 
         Git git = new Git(repo);
         Iterable<RevCommit> log = git.log().addPath(path).call();
-        return doesCommitListIncludeContentIsAMessage(contents, caseInsensitive, log);
+        return doesCommitListIncludeContentInAMessage(contents, caseInsensitive, log);
     }
 
     boolean anyCommitMessagesContainsString(String contents, boolean caseInsensitive) throws IOException, GitAPIException {
 
         Git git = new Git(repo);
         Iterable<RevCommit> log = git.log().all().call();
-        return doesCommitListIncludeContentIsAMessage(contents, caseInsensitive, log);
+        return doesCommitListIncludeContentInAMessage(contents, caseInsensitive, log);
     }
 
     boolean lastCommitMessageForFileContainsString(String path, String contents, boolean caseInsensitive) throws IOException, GitAPIException {
@@ -318,7 +318,14 @@ class GitFunctions {
         return latestCommit;
     }
 
-    private Boolean doesCommitListIncludeContentIsAMessage(String contents, boolean caseInsensitive, Iterable<RevCommit> log) {
+    /**
+     * Unility method check a list of commits for a commit message
+     * @param contents the text to look into the commit message for
+     * @param caseInsensitive whether to check case
+     * @param log the list of commits
+     * @return true if the messages contains text.
+     */
+    private Boolean doesCommitListIncludeContentInAMessage(String contents, boolean caseInsensitive, Iterable<RevCommit> log) {
 
         for (RevCommit commit : log) {
             if (caseInsensitive) {
@@ -334,4 +341,5 @@ class GitFunctions {
         }
         return false;
     }
+
 }

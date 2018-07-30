@@ -1,0 +1,24 @@
+{
+  "setup-files": [
+    {"path":"folder/a", "contents":"a"},
+    {"path":"3-folder/a", "contents":"blah"}
+  ],
+  "rules":[
+    { "rule": "head-exists", "stop-on-fail":true},
+    { "rule": "head-exists", "stop-on-fail":true, "alternative-title":"Did you create the Repo?", "pre-text":"Step 1.", "post-text":"Howdy!"},
+    { "rule": "file-tracked-in-head", "path": "file1.txt"},
+    { "rule": "file-tracked-in-head", "path": "folder/file1.txt"},
+    { "rule": "file-untracked-in-head", "path": "folder/not-here.txt"},
+    { "rule": "file-has-hash-in-head", "path": "folder/file2.txt", "hash": "907b308167f0880fb2a5c0e1614bb0c7620f9dc3"},
+    { "rule": "file-contains-in-head", "path" : "a", "contents":"hello", "ignore-case":true},
+    { "rule": "last-commit-message-for-file-contains", "path":"folder/c", "contents":"Caterpillar", "ignore-case":true},
+    { "rule": "any-commit-message-for-file-contains", "path":"folder/c", "contents":"COMMIT", "ignore-case":true},
+    { "rule": "last-commit-message-for-file-contains", "path":"folder/c", "contents":"caterpillar", "ignore-case":false},
+    { "rule": "last-commit-message-for-file-contains", "path":"folder/z", "contents":"ads", "ignore-case":false},
+    { "rule": "commit-with-message-updated-file", "contents": "ads", "path":"folder/z"},
+    { "rule": "commit-with-message-doesnt-update-file", "contents": "ads", "path":"folder/a"},
+    { "rule": "ignored", "path":"ignored.bak"},
+    { "rule": "file-tracked-in-branch" , "path": "file-in-branch-1.txt", "branch":"branch-1"},
+    { "rule": "file-contains-in-branch", "branch":"branch-1", "path" : "file-in-branch-1.txt", "contents":"second line", "ignore-case":true}
+  ]
+}

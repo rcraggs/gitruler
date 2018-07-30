@@ -53,7 +53,8 @@ public class Command implements Runnable {
         }
 
         try {
-            config = new GitRulerConfig(configFilePath);
+            File configFile = new File(configFilePath);
+            config = new GitRulerConfig(configFile);
         } catch (IOException e) {
             System.out.println("Could not read configuration from " + configFilePath);
             System.exit(1);

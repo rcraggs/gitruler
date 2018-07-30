@@ -129,6 +129,21 @@ public class Rule {
     }
 
     /**
+     * Get the available score for getting this rule correct
+     * @return the score form the rule config or zero if absent
+     */
+    double getScoreIfCorrect() {
+
+        Object scoreObj = details.getOrDefault("score-if-correct", 0d);
+        if (scoreObj.getClass() == Double.class)
+            return (double) scoreObj;
+        else if (scoreObj.getClass() == Integer.class)
+            return 1.0 * (int) scoreObj;
+        else
+            return 0d;
+    }
+
+    /**
      * Get the path or empty string if there is none
      * @return as described above.
      */

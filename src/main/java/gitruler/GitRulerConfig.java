@@ -14,9 +14,14 @@ class GitRulerConfig {
     private List<Rule> rules = new ArrayList<>();
     private Map<String, String> setupFiles= new HashMap<>();
 
-    GitRulerConfig(String path) throws IOException {
+    /**
+     * Get the rules and setup configuration from a file path
+     * @param path The path to the file containing the config
+     * @throws IOException An exception reading the file
+     */
+    GitRulerConfig(File path) throws IOException {
 
-        String configData = FileUtils.readFileToString(new File(path), Charset.forName("UTF-8"));
+        String configData = FileUtils.readFileToString(path, Charset.forName("UTF-8"));
 
         JSONObject rulesRoot = new JSONObject(configData);
         JSONArray rulesJson = rulesRoot.getJSONArray("rules");
@@ -41,6 +46,14 @@ class GitRulerConfig {
             JSONObject file = setupJson.getJSONObject(i);
             setupFiles.put(file.getString("path"), file.getString("contents"));
         }
+    }
+
+    /**
+     * Sum the scores for each of the rules in the config
+     * @return the total score as a double.
+     */
+    double getTotalAvailableScore() {
+        return rules.stream().mapToDouble(Rule::getScoreIfCorrect).sum();
     }
 
     Iterable<Rule> getRules() {

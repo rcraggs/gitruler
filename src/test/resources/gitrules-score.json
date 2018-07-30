@@ -1,0 +1,9 @@
+{
+  "setup-files": [],
+  "rules":[
+    { "rule": "head-exists", "stop-on-fail":true, "score-if-correct":10},
+    { "rule": "head-exists", "stop-on-fail":true, "score-if-correct":12.5},
+    { "rule": "head-exists", "stop-on-fail":true, "score-if-correct":0},
+    { "rule": "head-exists", "stop-on-fail":true}
+    ]
+}

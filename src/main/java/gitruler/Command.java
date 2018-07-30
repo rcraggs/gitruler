@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.text.DecimalFormat;
 
-@CommandLine.Command(name = "testrepo", mixinStandardHelpOptions = true, version = "Gitruler 1.0")
+@CommandLine.Command(name = "testrepo", mixinStandardHelpOptions = true, version = "Gitruler 0.2")
 public class Command implements Runnable {
 
     private static final String ANSI_RESET = "\u001B[0m";

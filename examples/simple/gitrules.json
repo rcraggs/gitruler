@@ -6,7 +6,8 @@
   "rules":[
     { "rule": "head-exists", "stop-on-fail":true},
     { "rule": "head-exists", "stop-on-fail":true, "alternative-title":"Did you create the Repo?", "pre-text":"Step 1.", "post-text":"Howdy!"},
-    { "rule": "file-tracked-in-head", "path": "file1.txt"},
+    { "rule": "file-tracked-in-head", "path": "file1.txt", "score-if-correct":10},
+    { "rule": "file-tracked-in-head", "path": "file1.txt", "score-if-correct":10.3},
     { "rule": "file-tracked-in-head", "path": "folder/file1.txt"},
     { "rule": "file-untracked-in-head", "path": "folder/not-here.txt"},
     { "rule": "file-has-hash-in-head", "path": "folder/file2.txt", "hash": "907b308167f0880fb2a5c0e1614bb0c7620f9dc3"},

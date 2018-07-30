@@ -3,19 +3,17 @@ package gitruler;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevTree;
-import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.treewalk.CanonicalTreeParser;
-import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.treewalk.filter.PathFilter;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.*;
-import java.util.*;
 
 class GitInteractor {
 
@@ -23,6 +21,7 @@ class GitInteractor {
     private static final String DUMMY_CONTENT = "DUMMY CONTENT";
     private static final String GIT_DIR_NAME = ".git";
     private Repository repo;
+    private GitFunctions gitFunctions;
     private String repositoryPath;
 
     GitInteractor(String path) throws IOException {
@@ -40,6 +39,8 @@ class GitInteractor {
         repo = repositoryBuilder.setGitDir(new File(path))
                 .setMustExist(true)
                 .build();
+
+        gitFunctions = new GitFunctions(repo);
     }
 
     RuleResult checkRule(Rule r) {
@@ -79,29 +80,28 @@ class GitInteractor {
         }
     }
 
+    /**
+     * Check whether there is a file with given contents at a path
+     * @param r the rule containing parameters
+     * @return a RuleResult
+     */
     private RuleResult checkFileContainsInBranch(Rule r) {
-
-        String path = r.getStringParameter("path");
-        String branch = r.getStringParameter("branch");
-        String contents = r.getStringParameter("contents");
 
         RuleResult result = new RuleResult();
         result.setPassed(false);
 
         try {
-            ObjectId id = getPathId(branch, path);
+            // Get the tree and check its contents
+            RevCommit branchCommit = gitFunctions.getBranchCommit(r.getBranch());
+            ObjectId treeId = gitFunctions.getTreeIdFromPath(r.getPath(), branchCommit);
 
-            if (id != null && id != ObjectId.zeroId() ) {
-                ObjectLoader loader = repo.open(id);
-                InputStream in = loader.openStream();
-                Scanner s = new Scanner(in).useDelimiter("\\A");
-                String fileContents = s.hasNext() ? s.next() : "";
-                result.setPassed(fileContents.toLowerCase().contains(contents.toLowerCase()));
+            if (gitFunctions.isValidObjectId(treeId)) {
+                String fileContents = gitFunctions.getFileContents(treeId);
+                result.setPassed(fileContents.toLowerCase().contains(r.getContents().toLowerCase()));
             }
 
         } catch (Exception e) {
             if (e.getMessage().startsWith("Could not find branch")) {
-                result.setPassed(false);
                 result.setMessage(e.getMessage());
             }else{
                 result = createResultFromException(e);
@@ -111,46 +111,15 @@ class GitInteractor {
         return result;
     }
 
-    ObjectId getPathId(String branchName, String path) throws Exception {
-
-        Git git = new Git(repo);
-        RevWalk walk = new RevWalk(repo);
-
-        Optional<Ref> branchOpt = git.branchList().call().stream().filter(b -> b.getName().contains(branchName)).findFirst();
-        Ref branch;
-
-        if (branchOpt.isPresent()){
-            branch = branchOpt.get();
-        }else{
-            throw new Exception("Could not find branch: " + branchName);
-        }
-
-        // Set up tree for searching
-        RevCommit lastCommit = walk.parseCommit(branch.getObjectId());
-        TreeWalk treeWalk = new TreeWalk(repo);
-        treeWalk.addTree(lastCommit.getTree());
-        treeWalk.setRecursive(true);
-        treeWalk.setFilter(PathFilter.create(path));
-
-        while (treeWalk.next()) {
-            if (treeWalk.getPathString() != null){
-                return treeWalk.getObjectId(0);
-            }
-        }
-
-        return null;
-    }
-
     private RuleResult checkFileTrackedInBranch(Rule r) {
 
-        String branchName = r.getStringParameter("branch");
-        String path = r.getStringParameter("path");
-        RuleResult result = new RuleResult();
-        result.setPassed(false);
+        RuleResult result = new RuleResult(false);
 
         try {
-            ObjectId pathId = getPathId(branchName, path);
-            if (pathId != ObjectId.zeroId()){
+            RevCommit branchCommit = gitFunctions.getBranchCommit(r.getBranch());
+            ObjectId pathId = gitFunctions.getTreeIdFromPath(r.getPath(), branchCommit);
+
+            if (gitFunctions.isValidObjectId(pathId)){
                 result.setPassed(true);
             }
         } catch (Exception e) {
@@ -162,16 +131,14 @@ class GitInteractor {
 
     private RuleResult gitWouldIgnore(Rule r) {
 
-
         RuleResult result = new RuleResult();
         Path backupPath = null;
 
-        Path path = Paths.get(repositoryPath + File.separator + r.getStringParameter("path"));
+        Path path = Paths.get(repositoryPath + File.separator + r.getPath());
         String pathStringValue = r.getStringParameter("path");
 
         // If the path exists, back it up and delete it
         if (Files.exists(path)){
-
             try {
                 File tempFile = File.createTempFile("ignore-test-backup", "bak");
                 tempFile.deleteOnExit();
@@ -237,183 +204,79 @@ class GitInteractor {
     private RuleResult checkCommitWithContentsDoesntUpdatePath(Rule r) {
 
         RuleResult result = new RuleResult();
-        String message = getReasonIfCheckForFileInCommitFails(r);
-        if (Objects.equals(message, THE_FILE_WAS_NOT_CHANGED_IN_THE_COMMIT)){
-            result.setPassed(true);
+        RevCommit commit = gitFunctions.getCommitWithMessageContaining(r.getContents(), r.getIgnoreCase());
+
+        if (commit == null){
+            result.setMessage("No commit with that message was found.");
         }else{
-            result.setPassed(false);
-            result.setMessage(message);
+            if (gitFunctions.isPathUpdatedInCommit(r.getPath(), commit)) {
+                result.setMessage("That file was not updated in that commit");
+            }else{
+                result.setPassed(true);
+            }
         }
 
         return result;
     }
 
-    private String getReasonIfCheckForFileInCommitFails(Rule r) {
-
-        String contents = r.getStringParameter("contents");
-        String path = r.getStringParameter("path");
-
-        boolean caseInsensitive = r.getBooleanParameter("ignore-case");
-        try {
-            RevCommit commit = getCommitWithMessageContaining(contents, caseInsensitive);
-
-            Git git = new Git(repo);
-
-            if (commit != null) {
-
-                CanonicalTreeParser commitTree = getCommitTree(git, commit.getTree().getId());
-
-                // Get the parent of this commit to compare it with
-                RevCommit[] parents = commit.getParents();
-                if (parents.length != 1){
-                    return "The commit with that message didn't have exactly one parent commit";
-                }
-
-                CanonicalTreeParser parentTree = getCommitTree(git, parents[0].getTree().getId());
-
-                List<DiffEntry> changes = git.diff()
-                        .setOldTree(parentTree)
-                        .setNewTree(commitTree)
-                        .setPathFilter(PathFilter.create(path))
-                        .call();
-
-                if (changes.size() == 0){
-                    return THE_FILE_WAS_NOT_CHANGED_IN_THE_COMMIT;
-                }
-
-            }else{
-                return "There was no commit with that message";
-            }
-
-        } catch (Exception e) {
-            return "An error happened with the message:" + e.getMessage();
-        }
-
-        return "";
-    }
 
     private RuleResult checkCommitWithContentsUpdatedPath(Rule r) {
 
         RuleResult result = new RuleResult();
-        String message = getReasonIfCheckForFileInCommitFails(r);
-        if (message.isEmpty()){
-            result.setPassed(true);
+        RevCommit commit = gitFunctions.getCommitWithMessageContaining(r.getContents(), r.getIgnoreCase());
+
+        if (commit == null){
+            result.setMessage("No commit with that message was found.");
         }else{
-            result.setPassed(false);
-            result.setMessage(message);
+            if (gitFunctions.isPathUpdatedInCommit(r.getPath(), commit)) {
+                result.setPassed(true);
+            }else{
+                result.setMessage("That file was not updated in that commit");
+            }
         }
 
         return result;
-    }
-
-    private CanonicalTreeParser getCommitTree(Git git, ObjectId treeId) throws IOException {
-        CanonicalTreeParser commitTree = new CanonicalTreeParser();
-        try( ObjectReader reader = git.getRepository().newObjectReader() ) {
-            commitTree.reset(reader, treeId);
-        }
-        return commitTree;
-    }
-
-    private RevCommit getCommitWithMessageContaining(String contents, boolean caseInsensitive) throws IOException, GitAPIException {
-        Git git = new Git(repo);
-        Iterable<RevCommit> log = git.log().all().call();
-        for (RevCommit commit: log) {
-            if (caseInsensitive) {
-                if (commit.getFullMessage().toLowerCase().contains(contents.toLowerCase())){
-                    return commit;
-                }
-            }
-            else{
-                if (commit.getFullMessage().contains(contents)){
-                    return commit;
-                }
-            }
-        }
-
-        return null;
     }
 
     private RuleResult checkCommitForPathContains(Rule r, boolean mustBeLastCommit) {
 
-        String path = "";
-
-        if (r.details.containsKey("path")) {
-            path = r.getStringParameter("path");
-        }
+        String path;
         String contents = r.getStringParameter("contents");
         boolean caseInsensitive = r.getBooleanParameter("ignore-case");
-        RuleResult result = new RuleResult();
-        result.setPassed(false);
+
+        boolean resultsValue = false;
         try {
-
-            List<RevCommit> commits = new ArrayList<>();
-            double latestTimeCommit = 0;
-            Git git = new Git(repo);
-            Iterable<RevCommit> log;
-            if (path.isEmpty()) {
-                log = git.log().all().call();
+            if (r.details.containsKey("path")){
+                path = r.getStringParameter("path");
+                if (mustBeLastCommit){
+                    resultsValue = gitFunctions.lastCommitMessageForFileContainsString(path, contents, caseInsensitive);
+                }else{
+                    resultsValue = gitFunctions.anyCommitMessagesForFileContainsString(path, contents, caseInsensitive);
+                }
             }else{
-                log = git.log().addPath(path).call();
+                resultsValue = gitFunctions.anyCommitMessagesContainsString(contents, caseInsensitive);
             }
-
-            // Collect the commits to check
-            for (RevCommit commit: log) {
-
-                if (mustBeLastCommit) {
-                    if (commit.getCommitTime() > latestTimeCommit) {
-                        // Only keep the latest commit
-                        latestTimeCommit = commit.getCommitTime();
-                        commits.clear();
-                        commits.add(commit);
-                    }
-                } else {
-                    commits.add(commit);
-                }
-            }
-
-            // Check the commits for a matching message
-            for (RevCommit commit : commits) {
-                if (caseInsensitive) {
-                    if (commit.getFullMessage().toLowerCase().contains(contents.toLowerCase())){
-                        result.setPassed(true);
-                        return result;
-                    }
-                }
-                else{
-                    if (commit.getFullMessage().contains(contents)){
-                        result.setPassed(true);
-                        return result;
-                    }
-                }
-            }
-        }catch(GitAPIException | IOException e){
-            result = createResultFromException(e);
+        } catch (IOException | GitAPIException e) {
+            resultsValue = false;
         }
 
-        return result;
+        return new RuleResult(resultsValue);
     }
 
     private RuleResult checkFileContainsContents(Rule r) {
 
-        String path = r.getStringParameter("path");
-        String contents = r.getStringParameter("contents");
-        boolean caseInsensitive = r.getBooleanParameter("ignore-case");
         RuleResult result = new RuleResult();
 
         try {
-            String fileContents = getContentsOfFileInCommit(Constants.HEAD, path);
+            RevCommit commit = gitFunctions.getCommitFromRefString(Constants.HEAD);
+            String fileContents = gitFunctions.getContentsOfFileInCommit(commit, r.getPath());
 
             boolean foundMatch;
-            if (fileContents == null){
-                foundMatch = false;
-            }else{
-
-                if (caseInsensitive) {
-                    foundMatch = fileContents.toLowerCase().contains(contents.toLowerCase());
-                }
-                else{
-                    foundMatch = fileContents.contains(contents);
-                }
+            if (r.getIgnoreCase()) {
+                foundMatch = fileContents != null && fileContents.toLowerCase().contains(r.getContents().toLowerCase());
+            }
+            else{
+                foundMatch = fileContents != null && fileContents.contains(r.getContents());
             }
 
             result.setPassed(foundMatch);
@@ -426,13 +289,12 @@ class GitInteractor {
 
     private RuleResult checkBlobInLocationInHead(Rule r) {
 
-        String path = r.getStringParameter("path");
         String id = r.getStringParameter("hash");
-
         RuleResult result = new RuleResult();
 
         try {
-            boolean pathFound = pathExistsInCommit(Constants.HEAD, path, id);
+            RevCommit head = gitFunctions.getCommitFromRefString(Constants.HEAD);
+            boolean pathFound = gitFunctions.pathExistsInCommit(head, r.getPath(), id);
             result.setPassed(pathFound);
         } catch (Exception e) {
             result = createResultFromException(e);
@@ -443,10 +305,10 @@ class GitInteractor {
     private RuleResult checkFileNotExistsInHead(Rule r) {
 
         // Get the necessary parameters
-        String path = r.getStringParameter("path");
         RuleResult result = new RuleResult();
         try {
-            boolean pathFound = pathExistsInCommit(Constants.HEAD, path);
+            RevCommit head = gitFunctions.getCommitFromRefString(Constants.HEAD);
+            boolean pathFound = gitFunctions.pathExistsInCommit(head, r.getPath());
             result.setPassed(!pathFound);
         } catch (Exception e) {
             result.setPassed(false);
@@ -474,65 +336,16 @@ class GitInteractor {
     private RuleResult checkFileExistsInHead(Rule r) {
 
         // Get the necessary parameters
-        String path = r.getStringParameter("path");
-        RuleResult result = new RuleResult();
+        RuleResult result = new RuleResult(false);
         try {
-            boolean pathFound = pathExistsInCommit(Constants.HEAD, path);
+            RevCommit head = gitFunctions.getCommitFromRefString(Constants.HEAD);
+            boolean pathFound = gitFunctions.pathExistsInCommit(head, r.getPath());
             result.setPassed(pathFound);
         } catch (Exception e) {
-            result.setPassed(false);
             result.setMessage("An error occurred when running this rule.");
         }
 
         return result;
-    }
-
-    private boolean pathExistsInCommit(String commitRefString, String path) throws IOException, NullPointerException {
-        return pathExistsInCommit(commitRefString, path, "");
-    }
-
-    private boolean pathExistsInCommit(String commitRefString, String path, String id ) throws IOException, NullPointerException {
-
-        ObjectId commitId = repo.resolve(commitRefString);
-        RevWalk revWalk = new RevWalk(repo);
-        RevCommit commit = revWalk.parseCommit(commitId);
-        RevTree tree = commit.getTree();
-
-        TreeWalk treeWalk = new TreeWalk(repo);
-        treeWalk.addTree(tree);
-        treeWalk.setRecursive(true);
-        treeWalk.setFilter(PathFilter.create(path));
-        while (treeWalk.next()) {
-            if (treeWalk.getPathString() != null){
-                ObjectId objectId = treeWalk.getObjectId(0);
-                // If an id is passed in check that it matches, otherwise return true anyway
-                return (id == null || id.isEmpty() || Objects.equals(objectId.getName(), id));
-            }
-        }
-        return false;
-    }
-
-    private String getContentsOfFileInCommit(String commitRefString, String path) throws IOException, NullPointerException {
-
-        ObjectId commitId = repo.resolve(commitRefString);
-        RevWalk revWalk = new RevWalk(repo);
-        RevCommit commit = revWalk.parseCommit(commitId);
-        RevTree tree = commit.getTree();
-
-        TreeWalk treeWalk = new TreeWalk(repo);
-        treeWalk.addTree(tree);
-        treeWalk.setRecursive(true);
-        treeWalk.setFilter(PathFilter.create(path));
-        while (treeWalk.next()) {
-            if (treeWalk.getPathString() != null){
-                ObjectId objectId = treeWalk.getObjectId(0);
-                ObjectLoader loader = repo.open(objectId);
-                InputStream in = loader.openStream();
-                Scanner s = new Scanner(in).useDelimiter("\\A");
-                return s.hasNext() ? s.next() : "";
-            }
-        }
-        return null;
     }
 
     private RuleResult createResultFromException(Exception e) {

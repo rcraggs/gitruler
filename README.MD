@@ -75,6 +75,8 @@ Rules are the checks that will be made on the repository each time the applicati
 | `commit-with-message-updated-file` | Check that a commit whose message contains a phrase had an update to a file| `path`, `contents` | `ignore-case` |
 | `commit-with-message-doesnt-update-file` | Check that a commit whose message contains a phrase does not update a file| `path`, `contents` | `ignore-case` |
 | `ignored` | Check that a file at a given path would be ignored by git | `path` | - |
+| `file-tracked-in-branch` | Checks if a file exists in the given branch | `path`, `branch` | - |
+| `file-contains-in-branch` | Checks if a file exists with given contents in the given branch | `path`, `branch`, `contents` | `ignore-case` |
 
 #### Common Rule Options
 

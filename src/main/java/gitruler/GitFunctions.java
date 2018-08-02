@@ -319,6 +319,18 @@ class GitFunctions {
     }
 
     /**
+     * Check whether there exists a branch with a given name.
+     * @param branchName the name of the branch.
+     * @return True if the branch exists.
+     * @throws GitAPIException Git exception.
+     */
+    boolean doesBranchExist(String branchName) throws GitAPIException {
+        Git git = new Git(repo);
+        Optional<Ref> branchOpt = git.branchList().call().stream().filter(b -> b.getName().contains(branchName)).findFirst();
+        return branchOpt.isPresent();
+    }
+
+    /**
      * Unility method check a list of commits for a commit message
      * @param contents the text to look into the commit message for
      * @param caseInsensitive whether to check case

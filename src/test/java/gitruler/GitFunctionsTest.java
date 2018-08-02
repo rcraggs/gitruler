@@ -8,8 +8,8 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.junit.Test;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,13 +18,13 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class GitFunctionsTest {
+public class GitFunctionsTest {
 
     private static GitFunctions gf;
     private static Repository repo;
 
     @BeforeAll
-    static void setup() {
+    public static void setup() {
 
         // Find the path to the test repo from the properties file
         Properties props = new Properties();
@@ -46,7 +46,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void getBranchRefExistsTest() {
+    public void getBranchRefExistsTest() {
 
         try {
             RevCommit branchCommit = gf.getBranchCommit("branch-1");
@@ -58,7 +58,7 @@ class GitFunctionsTest {
 
 
     @Test
-    void getBranchRefMasterTest() {
+    public void getBranchRefMasterTest() {
 
         try {
             RevCommit branchCommit = gf.getBranchCommit("master");
@@ -70,7 +70,7 @@ class GitFunctionsTest {
 
 
     @Test
-    void getBranchRefNotExistsTest() {
+    public void getBranchRefNotExistsTest() {
 
         try {
             gf.getBranchCommit("unknown");
@@ -81,7 +81,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void getTreeIdFromPathTest() {
+    public void getTreeIdFromPathTest() {
 
         RevWalk walk = new RevWalk(repo);
         try {
@@ -94,7 +94,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void getTreeIdFromPathIncorrectPathTest() {
+    public void getTreeIdFromPathIncorrectPathTest() {
 
         RevWalk walk = new RevWalk(repo);
         try {
@@ -107,7 +107,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void getTreeIdFromPathIncorrectCommitIdTest() {
+    public void getTreeIdFromPathIncorrectCommitIdTest() {
 
         RevWalk walk = new RevWalk(repo);
         try {
@@ -120,14 +120,14 @@ class GitFunctionsTest {
     }
 
     @Test
-    void getFileContentsValidTreeTest() throws IOException {
+    public void getFileContentsValidTreeTest() throws IOException {
 
         String contents = gf.getFileContents(ObjectId.fromString("67ba9998ffaa6edad2d84287800d9efd1941409c"));
         assertTrue(contents.contains("updated"));
     }
 
     @Test
-    void getCommitWithMessageContainingTest() {
+    public void getCommitWithMessageContainingTest() {
 
         assertNotNull(gf.getCommitWithMessageContaining("FILE1", true));
         assertNull(gf.getCommitWithMessageContaining("FILE1", false));
@@ -135,7 +135,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void isCommitOrphanTest() throws IOException {
+    public void isCommitOrphanTest() throws IOException {
 
         RevWalk walk = new RevWalk(repo);
         RevCommit commit = walk.parseCommit(ObjectId.fromString("0c895c4ef98ee8184ea7bc619e56c5ce31948628"));
@@ -146,7 +146,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void wasPathUpdatedInCommitSimpleTrueTest() throws IOException {
+    public void wasPathUpdatedInCommitSimpleTrueTest() throws IOException {
 
         RevWalk walk = new RevWalk(repo);
         RevCommit commit = walk.parseCommit(ObjectId.fromString("892d8e86ce4d04618e46309914fc6d8666dbed49"));
@@ -154,7 +154,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void wasPathUpdatedInFirstCommitTest() throws IOException {
+    public void wasPathUpdatedInFirstCommitTest() throws IOException {
 
         RevWalk walk = new RevWalk(repo);
         RevCommit commit = walk.parseCommit(ObjectId.fromString("0c895c4ef98ee8184ea7bc619e56c5ce31948628"));
@@ -162,7 +162,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void wasPathUpdatedInFirstCommitFailTest() throws IOException {
+    public void wasPathUpdatedInFirstCommitFailTest() throws IOException {
 
         RevWalk walk = new RevWalk(repo);
         RevCommit commit = walk.parseCommit(ObjectId.fromString("0c895c4ef98ee8184ea7bc619e56c5ce31948628"));
@@ -170,7 +170,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void wasPathUpdatedInCommitThereButNotUpdatedTest() throws IOException {
+    public void wasPathUpdatedInCommitThereButNotUpdatedTest() throws IOException {
 
         RevWalk walk = new RevWalk(repo);
         RevCommit commit = walk.parseCommit(ObjectId.fromString("069eeb05253827a6d7d281f3e51665781e5c3f37"));
@@ -178,7 +178,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void pathExistsInCommitTest() throws IOException {
+    public void pathExistsInCommitTest() throws IOException {
 
         RevCommit commit =  gf.getCommitFromRefString(Constants.HEAD);
         assertTrue(gf.pathExistsInCommit(commit, "file1.txt"));
@@ -188,7 +188,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void pathExistsInCommitWithIdTest() throws IOException {
+    public void pathExistsInCommitWithIdTest() throws IOException {
 
         RevCommit commit =  gf.getCommitFromRefString(Constants.HEAD);
         assertTrue(gf.pathExistsInCommit(commit, "file1.txt", "67ba9998ffaa6edad2d84287800d9efd1941409c"));
@@ -197,7 +197,7 @@ class GitFunctionsTest {
     }
 
     @Test
-    void getContentsOfFileInCommitTest() throws IOException {
+    public void getContentsOfFileInCommitTest() throws IOException {
 
         RevCommit commit =  gf.getCommitFromRefString("892d8e86ce4d04618e46309914fc6d8666dbed49");
         assertEquals(gf.getContentsOfFileInCommit(commit, "file2.txt"),"file2"+System.lineSeparator());
@@ -208,10 +208,16 @@ class GitFunctionsTest {
     }
 
     @Test
-    void getCommitMessageForFileContainsString() throws IOException, GitAPIException {
+    public void getCommitMessageForFileContainsString() throws IOException, GitAPIException {
         assertTrue(gf.anyCommitMessagesForFileContainsString("file1.txt", "MULTIPLE", true));
         assertFalse(gf.anyCommitMessagesForFileContainsString("file1.txt", "MULTIPLE", false));
         assertTrue(gf.anyCommitMessagesForFileContainsString("file1.txt", "add file1", true));
         assertFalse(gf.anyCommitMessagesForFileContainsString("file1.txt", "ADD README", true));
+    }
+
+    @Test
+    public void hasBranchExistsTest() throws GitAPIException {
+        assertTrue(gf.doesBranchExist("branch-1"));
+        assertTrue(gf.doesBranchExist("branch-doesnt-exist"));
     }
 }

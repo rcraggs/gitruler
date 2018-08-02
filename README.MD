@@ -77,6 +77,7 @@ Rules are the checks that will be made on the repository each time the applicati
 | `ignored` | Check that a file at a given path would be ignored by git | `path` | - |
 | `file-tracked-in-branch` | Checks if a file exists in the given branch | `path`, `branch` | - |
 | `file-contains-in-branch` | Checks if a file exists with given contents in the given branch | `path`, `branch`, `contents` | `ignore-case` |
+| `branch-exists` | Checks if a given branch exists | `branch` | - |
 
 #### Common Rule Options
 

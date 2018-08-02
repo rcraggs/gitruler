@@ -50,11 +50,13 @@ public class Rule {
             case TEXT_RULE_NAME:
                 return createTextRuleOutput();
             case "ignored":
-                return "Git ignores '" + (String) details.get("path") +"'";
+                return "Git ignores '" + getPath() +"'";
             case "file-tracked-in-branch":
-                return "The file is tracked " + details.get("path") + " in branch " + details.get("path");
+                return "The file " + getPath() + " is tracked in the branch '" + getBranch() +"'";
+            case "branch-exists":
+                return "A branch called '" + this.getBranch() + "' exists";
             case "file-contains-in-branch":
-                return "The file: " + (String) details.get("path") + " contains the text '" + (String) details.get("contents") + "' in the branch '" + getStringParameter("branch") + "'";
+                return "The file " + getPath() + " contains the text '" + getContents() + "' in the branch '" + getBranch() + "'";
             default:
                 return "Unknown rule";
         }

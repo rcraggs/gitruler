@@ -5,6 +5,7 @@ import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.*;
+import java.util.Optional;
 
 class GitInteractor {
 
@@ -72,12 +74,31 @@ class GitInteractor {
                 return checkFileTrackedInBranch(r);
             case "file-contains-in-branch":
                 return checkFileContainsInBranch(r);
+            case "branch-exists":
+                return checkBranchExists(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    /**
+     * Check whether a branch exists.
+     * @param r the rule containing parameter
+     * @return a RuleResult
+     */
+    private RuleResult checkBranchExists(Rule r) {
+
+        RuleResult result = new RuleResult(false);
+        try {
+            result.setPassed(gitFunctions.doesBranchExist(r.getBranch()));
+        } catch (GitAPIException e) {
+            result = createResultFromException(e);
+        }
+
+        return result;
     }
 
     /**

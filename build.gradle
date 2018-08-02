@@ -34,4 +34,5 @@ dependencies {
     compile 'commons-io:commons-io:2.6'
     compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.0.1.201806211838-r'
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.2.0'
 }

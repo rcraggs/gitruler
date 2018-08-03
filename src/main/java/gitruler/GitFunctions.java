@@ -379,8 +379,7 @@ class GitFunctions {
         RevCommit commitWithMessage = getCommitWithMessageContaining(commitMessageContents, ignoreMessageCase);
         Git git = new Git(repo);
 
-
-        if (commitMessageContents == null){
+        if (commitWithMessage == null){
             return false;
         }
 
@@ -401,4 +400,31 @@ class GitFunctions {
 
         return false;
     }
+
+    /**
+     * Check whether the commits underneath a branch reference include a commit with a given message
+     * @param branch the branch name
+     * @param commitMessage The text within the message
+     * @param ignoreCase Whether to ignore the case when checking the commit message
+     * @return True of the commit with that message was under the branch ref
+     * @throws BranchNotFoundException Git exception
+     * @throws IOException Git exception
+     */
+    boolean wasCommitWithMessageMadeOnBranch(String branch, String commitMessage, boolean ignoreCase) throws BranchNotFoundException, IOException {
+
+        RevCommit commitWithMessage = getCommitWithMessageContaining(commitMessage, ignoreCase);
+
+        // Get a walker for the branch
+        RevWalk revWalk = new RevWalk(repo);
+        revWalk.markStart( revWalk.parseCommit(getBranchCommit(branch).getId()));
+
+        // Look at each commit in the branch
+        for( RevCommit commit : revWalk ) {
+            if (commit.getId().equals(commitWithMessage.getId())){
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

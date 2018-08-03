@@ -77,15 +77,36 @@ class GitInteractor {
                 return checkFileContainsInBranch(r);
             case "branch-exists":
                 return checkBranchExists(r);
-            case "branch-received-commit-with-message":
+            case "commit-with-message-was-merged-into-branch":
                 return checkBranchReceivedCommitWithMessage(r);
-
+            case "commit-with-message-was-made-on-branch":
+                return getCommitWithMessageWasMadeOnBranch(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    /**
+     * Check whether a commit was made on a specific branch
+     * @param r The rule details
+     * @return The RuleResult
+     */
+    private RuleResult getCommitWithMessageWasMadeOnBranch(Rule r) {
+
+        RuleResult result = new RuleResult();
+        try {
+            result.setPassed(gitFunctions.wasCommitWithMessageMadeOnBranch(r.getBranch(), r.getContents(), r.getIgnoreCase()));
+        } catch (IOException e) {
+            return createResultFromException(e);
+        } catch (BranchNotFoundException e) {
+            result.setPassed(false);
+            result.setMessage("The branch with that name doesn't exist");
+        }
+
+        return result;
     }
 
     /**

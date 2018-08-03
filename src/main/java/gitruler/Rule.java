@@ -13,7 +13,6 @@ public class Rule {
      * Add the checkrule in the GitInterator
      * Add the documentation
      */
-
     Map<String, Object> details;
 
     Rule(Map<String, Object> details){
@@ -57,8 +56,10 @@ public class Rule {
                 return "A branch called '" + this.getBranch() + "' exists";
             case "file-contains-in-branch":
                 return "The file " + getPath() + " contains the text '" + getContents() + "' in the branch '" + getBranch() + "'";
-            case "branch-received-commit-with-message":
+            case "commit-with-message-was-merged-into-branch":
                 return "The branch '" + getBranch() + "' received a commit with the message containing '" + getContents() + "'";
+            case "commit-with-message-was-made-on-branch":
+                return "The commit whose message contained '" + getContents() + "' was made on the branch '" + getBranch() + "'";
             default:
                 return "Unknown rule";
         }

@@ -78,6 +78,9 @@ Rules are the checks that will be made on the repository each time the applicati
 | `file-tracked-in-branch` | Checks if a file exists in the given branch | `path`, `branch` | - |
 | `file-contains-in-branch` | Checks if a file exists with given contents in the given branch | `path`, `branch`, `contents` | `ignore-case` |
 | `branch-exists` | Checks if a given branch exists | `branch` | - |
+| `commit-with-message-was-made-on-branch` | Check if a certain commit was made on the given branch| `branch`, `content` | `ignore-case` |
+| `commit-with-message-was-merged-into-branch` | Check if a certain commit merged into a branch| `branch`, `content` | `ignore-case` |
+
 
 #### Common Rule Options
 

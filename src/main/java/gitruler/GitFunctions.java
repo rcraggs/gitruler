@@ -2,9 +2,14 @@ package gitruler;
 
 import gitruler.exceptions.BranchNotFoundException;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.revplot.PlotCommit;
+import org.eclipse.jgit.revplot.PlotCommitList;
+import org.eclipse.jgit.revplot.PlotLane;
+import org.eclipse.jgit.revplot.PlotWalk;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -116,11 +121,16 @@ class GitFunctions {
 
                 if (caseInsensitive) {
                     if (commit.getFullMessage().toLowerCase().contains(contents.toLowerCase())){
+
+                        RevWalk revWalk = new RevWalk(repo);
+                        commit = revWalk.parseCommit(commit.getId());
                         return commit;
                     }
                 }
                 else{
                     if (commit.getFullMessage().contains(contents)){
+                        RevWalk revWalk = new RevWalk(repo);
+                        commit = revWalk.parseCommit(commit.getId());
                         return commit;
                     }
                 }
@@ -354,4 +364,41 @@ class GitFunctions {
         return false;
     }
 
+    /**
+     * Does the commit with the given message have a child commit that is on a branch with the given name?
+     * @param branch The name of the branch
+     * @param commitMessageContents The contents used to find the parent commit
+     * @param ignoreMessageCase Whether to ignore the case when finding the commit
+     * @return True of the commit with that message as merged on committed into a commit on the given branch
+     * @throws IOException Git exception
+     * @throws GitAPIException Git exception
+     */
+    boolean isChildOfCommitOnBranch(String branch, String commitMessageContents, boolean ignoreMessageCase) throws IOException, GitAPIException, BranchNotFoundException {
+
+        // get the commit with that message
+        RevCommit commitWithMessage = getCommitWithMessageContaining(commitMessageContents, ignoreMessageCase);
+        Git git = new Git(repo);
+
+
+        if (commitMessageContents == null){
+            return false;
+        }
+
+        // Get a walker for the branch
+        RevWalk revWalk = new RevWalk(repo);
+        revWalk.markStart( revWalk.parseCommit(getBranchCommit(branch).getId()));
+
+        // Look at each commit in the branch
+        for( RevCommit commit : revWalk ) {
+
+            // if the parent of this commit (in the branch) is our commit then we succeeded
+            for (RevCommit parentCommit : commit.getParents()){
+                if (parentCommit.getId().equals(commitWithMessage.getId())){
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

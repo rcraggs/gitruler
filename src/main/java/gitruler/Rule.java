@@ -57,6 +57,8 @@ public class Rule {
                 return "A branch called '" + this.getBranch() + "' exists";
             case "file-contains-in-branch":
                 return "The file " + getPath() + " contains the text '" + getContents() + "' in the branch '" + getBranch() + "'";
+            case "branch-received-commit-with-message":
+                return "The branch '" + getBranch() + "' received a commit with the message containing '" + getContents() + "'";
             default:
                 return "Unknown rule";
         }

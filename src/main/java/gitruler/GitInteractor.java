@@ -1,5 +1,6 @@
 package gitruler;
 
+import gitruler.exceptions.BranchNotFoundException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -76,12 +77,36 @@ class GitInteractor {
                 return checkFileContainsInBranch(r);
             case "branch-exists":
                 return checkBranchExists(r);
+            case "branch-received-commit-with-message":
+                return checkBranchReceivedCommitWithMessage(r);
+
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    /**
+     * Is there a commit on the given branch that has a parent commit that contains a given message?
+     * This lets us check whether a merge occurred that merged a commit into another branch.
+     * @param r Rule details.
+     * @return The RuleResult
+     */
+    private RuleResult checkBranchReceivedCommitWithMessage(Rule r) {
+
+        RuleResult result = new RuleResult();
+        try {
+            result.setPassed(gitFunctions.isChildOfCommitOnBranch(r.getBranch(), r.getContents(), r.getIgnoreCase()));
+        } catch (IOException | GitAPIException e) {
+            return createResultFromException(e);
+        } catch (BranchNotFoundException e) {
+            result.setPassed(false);
+            result.setMessage("The branch with that name doesn't exist");
+        }
+
+        return result;
     }
 
     /**

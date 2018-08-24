@@ -78,9 +78,10 @@ Rules are the checks that will be made on the repository each time the applicati
 | `file-tracked-in-branch` | Checks if a file exists in the given branch | `path`, `branch` | - |
 | `file-contains-in-branch` | Checks if a file exists with given contents in the given branch | `path`, `branch`, `contents` | `ignore-case` |
 | `branch-exists` | Checks if a given branch exists | `branch` | - |
-| `commit-with-message-was-made-on-branch` | Check if a certain commit was made on the given branch| `branch`, `content` | `ignore-case` |
-| `commit-with-message-was-merged-into-branch` | Check if a certain commit merged into a branch| `branch`, `content` | `ignore-case` |
+| `commit-with-message-was-made-on-branch` | Check if a certain commit was made on the given branch| `branch`, `contents` | `ignore-case` |
+| `commit-with-message-was-merged-into-branch` | Check if a certain commit merged into a branch| `branch`, `contents` | `ignore-case` |
 | `tag-exists` | Check if there is a tag with the given name anywhere in the repository | `tag` | - |
+| `commit-with-message-has-tag` | Check that a given commit is tagged| `tag`, `contents` | `ignore-case` |
 
 TODO: commit-with-tag-updated-file
 TODO: tag-is-on-commit-with-id

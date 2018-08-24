@@ -62,6 +62,8 @@ public class Rule {
                 return "The commit whose message contained '" + getContents() + "' was made on the branch '" + getBranch() + "'";
             case "tag-exists":
                 return "A tag called '" + getTag() + "' exists";
+            case "commit-with-message-has-tag":
+                return "A tag called '" + getTag() + "' exists on a commit containing '" + getContents() + "'.";
             default:
                 return "Unknown rule";
         }

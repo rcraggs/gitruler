@@ -50,4 +50,9 @@ public class RuleResult {
     public void setExceptionTrace(String exceptionTrace) {
         this.exceptionTrace = exceptionTrace;
     }
+
+    void setFailWithMessage(String message){
+        this.setPassed(false);
+        this.setMessage(message);
+    }
 }

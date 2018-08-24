@@ -6,7 +6,6 @@ import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -16,7 +15,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.*;
-import java.util.Optional;
 
 class GitInteractor {
 
@@ -83,12 +81,36 @@ class GitInteractor {
                 return getCommitWithMessageWasMadeOnBranch(r);
             case "tag-exists":
                 return checkTagExists(r);
+            case "commit-with-message-has-tag":
+                return checkTagIsOnCommitWithMessage(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    /**
+     * Check that there is a commit with a given message and that it has a certain tag
+     * @param r rule details
+     * @return the RuleResult
+     */
+    private RuleResult checkTagIsOnCommitWithMessage(Rule r) {
+        RuleResult result = new RuleResult();
+        RevCommit commit = gitFunctions.getCommitWithMessageContaining(r.getContents(), r.getIgnoreCase());
+
+        if (commit == null){
+            result.setFailWithMessage("There was no commit with that message");
+        }else{
+            try {
+                result.setPassed(gitFunctions.isCommitTagged(commit, r.getTag()));
+            } catch (IOException e) {
+                result = createResultFromException(e);
+            }
+        }
+
+        return result;
     }
 
     /**

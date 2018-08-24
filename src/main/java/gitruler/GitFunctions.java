@@ -10,10 +10,7 @@ import org.eclipse.jgit.revplot.PlotCommit;
 import org.eclipse.jgit.revplot.PlotCommitList;
 import org.eclipse.jgit.revplot.PlotLane;
 import org.eclipse.jgit.revplot.PlotWalk;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevObject;
-import org.eclipse.jgit.revwalk.RevTree;
-import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.revwalk.*;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
@@ -437,18 +434,18 @@ class GitFunctions {
      * @return true if the tag exists
      */
     boolean doesTagExist(String tag) throws IOException {
-
         return repo.findRef(tag) != null;
-//
-//        boolean result = false;
-//
-//        try (RevWalk walk = new RevWalk(repo)) {
-//            Ref ref = repo.findRef(tag);
-////            RevObject any = walk.parseAny(ref.getObjectId());
-////            result = (any != null);
-//            walk.dispose();
-//        }
-//
-//        return result;
+    }
+
+    /**
+     * Check whether a given commit is tagged with a tag with the given name
+     * @param commit The commit to check
+     * @param tag the name of the tag
+     * @return True if the commit is correctly tagged.
+     */
+    boolean isCommitTagged(RevCommit commit, String tag) throws IOException {
+
+        Ref tagRef = repo.findRef(tag);
+        return tagRef != null && tagRef.getObjectId().equals(commit.toObjectId());
     }
 }

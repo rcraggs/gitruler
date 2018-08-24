@@ -11,6 +11,7 @@ import org.eclipse.jgit.revplot.PlotCommitList;
 import org.eclipse.jgit.revplot.PlotLane;
 import org.eclipse.jgit.revplot.PlotWalk;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevObject;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
@@ -377,7 +378,6 @@ class GitFunctions {
 
         // get the commit with that message
         RevCommit commitWithMessage = getCommitWithMessageContaining(commitMessageContents, ignoreMessageCase);
-        Git git = new Git(repo);
 
         if (commitWithMessage == null){
             return false;
@@ -410,9 +410,13 @@ class GitFunctions {
      * @throws BranchNotFoundException Git exception
      * @throws IOException Git exception
      */
-    boolean wasCommitWithMessageMadeOnBranch(String branch, String commitMessage, boolean ignoreCase) throws BranchNotFoundException, IOException {
+    boolean wasCommitWithMessageMadeOnBranch(String branch, String commitMessage, boolean ignoreCase) throws Exception {
 
         RevCommit commitWithMessage = getCommitWithMessageContaining(commitMessage, ignoreCase);
+
+        if (commitWithMessage == null){
+            throw new Exception("No commit with that message was found");
+        }
 
         // Get a walker for the branch
         RevWalk revWalk = new RevWalk(repo);
@@ -427,4 +431,24 @@ class GitFunctions {
         return false;
     }
 
+    /**
+     * Check whether a tag with the given name exists in the repository
+     * @param tag the name of the tag
+     * @return true if the tag exists
+     */
+    boolean doesTagExist(String tag) throws IOException {
+
+        return repo.findRef(tag) != null;
+//
+//        boolean result = false;
+//
+//        try (RevWalk walk = new RevWalk(repo)) {
+//            Ref ref = repo.findRef(tag);
+////            RevObject any = walk.parseAny(ref.getObjectId());
+////            result = (any != null);
+//            walk.dispose();
+//        }
+//
+//        return result;
+    }
 }

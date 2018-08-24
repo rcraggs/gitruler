@@ -60,6 +60,8 @@ public class Rule {
                 return "The branch '" + getBranch() + "' received a commit with the message containing '" + getContents() + "'";
             case "commit-with-message-was-made-on-branch":
                 return "The commit whose message contained '" + getContents() + "' was made on the branch '" + getBranch() + "'";
+            case "tag-exists":
+                return "A tag called '" + getTag() + "' exists";
             default:
                 return "Unknown rule";
         }
@@ -95,6 +97,10 @@ public class Rule {
     String getStringParameter(String key){
         // todo: Check that the parameter exists and is the right type
         return (String) details.get(key);
+    }
+
+    String getTag() {
+        return getStringParameter("tag");
     }
 
     String getRuleName(){

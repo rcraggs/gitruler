@@ -80,6 +80,11 @@ Rules are the checks that will be made on the repository each time the applicati
 | `branch-exists` | Checks if a given branch exists | `branch` | - |
 | `commit-with-message-was-made-on-branch` | Check if a certain commit was made on the given branch| `branch`, `content` | `ignore-case` |
 | `commit-with-message-was-merged-into-branch` | Check if a certain commit merged into a branch| `branch`, `content` | `ignore-case` |
+| `tag-exists` | Check if there is a tag with the given name anywhere in the repository | `tag` | - |
+
+TODO: commit-with-tag-updated-file
+TODO: tag-is-on-commit-with-id
+TODO: tag-is-on-commit-that-added-text-to-file
 
 
 #### Common Rule Options

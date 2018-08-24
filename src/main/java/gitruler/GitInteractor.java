@@ -81,12 +81,31 @@ class GitInteractor {
                 return checkBranchReceivedCommitWithMessage(r);
             case "commit-with-message-was-made-on-branch":
                 return getCommitWithMessageWasMadeOnBranch(r);
+            case "tag-exists":
+                return checkTagExists(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    /**
+     * Check whether a tag with the given name exists anywhere in the commit tree
+     * @param r the rule details
+     * @return The RuleResult
+     */
+    private RuleResult checkTagExists(Rule r) {
+
+        RuleResult result = new RuleResult(false);
+        try {
+            result.setPassed(gitFunctions.doesTagExist(r.getTag()));
+        } catch (IOException e) {
+            result = createResultFromException(e);
+        }
+
+        return result;
     }
 
     /**
@@ -99,11 +118,11 @@ class GitInteractor {
         RuleResult result = new RuleResult();
         try {
             result.setPassed(gitFunctions.wasCommitWithMessageMadeOnBranch(r.getBranch(), r.getContents(), r.getIgnoreCase()));
-        } catch (IOException e) {
-            return createResultFromException(e);
         } catch (BranchNotFoundException e) {
             result.setPassed(false);
             result.setMessage("The branch with that name doesn't exist");
+        } catch (Exception e) {
+            return createResultFromException(e);
         }
 
         return result;

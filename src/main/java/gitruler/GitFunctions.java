@@ -17,10 +17,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 
 class GitFunctions {
 
@@ -73,6 +70,11 @@ class GitFunctions {
 
         try {
             TreeWalk treeWalk = new TreeWalk(repo);
+
+            // ensure that the commit is fully parsed so we don't have null trees
+            RevWalk revWalk = new RevWalk(repo);
+            commit = revWalk.parseCommit(commit.getId());
+
             treeWalk.addTree(commit.getTree());
             treeWalk.setRecursive(true);
             treeWalk.setFilter(PathFilter.create(path));
@@ -248,6 +250,11 @@ class GitFunctions {
      */
     RevCommit getCommitFromRefString(String ref) throws IOException {
         ObjectId commitId = repo.resolve(ref);
+
+        if (commitId == null){
+            throw new IOException("There was no object with that ref");
+        }
+
         RevWalk revWalk = new RevWalk(repo);
         return revWalk.parseCommit(commitId);
     }
@@ -448,4 +455,16 @@ class GitFunctions {
         Ref tagRef = repo.findRef(tag);
         return tagRef != null && tagRef.getObjectId().equals(commit.toObjectId());
     }
+
+    /**
+     * Get the parents of a commit
+     * @param commit the commit to get the parents of
+     * @return a list of the parents
+     */
+    List<RevCommit> getParentCommits(RevCommit commit) {
+        return Arrays.asList(commit.getParents());
+    }
+
+
+
 }

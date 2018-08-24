@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.*;
+import java.util.List;
 
 class GitInteractor {
 
@@ -83,12 +84,83 @@ class GitInteractor {
                 return checkTagExists(r);
             case "commit-with-message-has-tag":
                 return checkTagIsOnCommitWithMessage(r);
+            case "tagged-commit-added-text-to-file":
+                return checkTagIsOnCommitThatAddedTextToFile(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    /**
+     * Find the commit associated with the given tag and check whether it added
+     * the text to the file given in the rule details
+     * @param r the rule details
+     * @return the RuleResult.
+     */
+    private RuleResult checkTagIsOnCommitThatAddedTextToFile(Rule r) {
+
+        RuleResult ruleResult = new RuleResult();
+
+        try {
+
+            if (!gitFunctions.doesTagExist(r.getTag())) {
+                ruleResult.setFailWithMessage("No commit has been tagged using that name");
+            }else{
+
+                RevCommit commit = gitFunctions.getCommitFromRefString(r.getTag());
+
+                // Check whether the commit edited that path
+                if (!gitFunctions.isPathUpdatedInCommit(r.getPath(), commit)){
+                    ruleResult.setFailWithMessage("The tagged commit didn't edit that file");
+                }else{
+
+                    boolean fileContainsText = doesPathInCommitContainText(r, commit);
+
+                    if (!fileContainsText){
+                        ruleResult.setFailWithMessage("The file did not contain that text in the tagged commit");
+                    }else{
+
+                        // Only check the previous commit if there is one
+                        if (!gitFunctions.isCommitOrphan(commit)){
+
+                            List<RevCommit> parents = gitFunctions.getParentCommits(commit);
+
+                            // If there are parents, then the required text must not be in any of them
+                            boolean textFoundInParent = false;
+                            for (RevCommit parent : parents){
+                                textFoundInParent = textFoundInParent || doesPathInCommitContainText(r, parent);
+                            }
+
+                            if (textFoundInParent){
+                                ruleResult.setFailWithMessage("The text was also in the parent commit");
+                            }else{
+                                ruleResult.setPassed(true);
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            ruleResult = createResultFromException(e);
+        }
+
+        return ruleResult;
+    }
+
+    private boolean doesPathInCommitContainText(Rule r, RevCommit commit) throws IOException {
+        // Check that the file in that commit contained the required text
+        String fileContents = gitFunctions.getContentsOfFileInCommit(commit, r.getPath());
+        String searchText = r.getContents();
+        if (r.getIgnoreCase()){
+            fileContents = fileContents.toLowerCase();
+            searchText = searchText.toLowerCase();
+        }
+
+        return fileContents.contains(searchText);
     }
 
     /**

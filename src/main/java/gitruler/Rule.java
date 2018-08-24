@@ -64,6 +64,8 @@ public class Rule {
                 return "A tag called '" + getTag() + "' exists";
             case "commit-with-message-has-tag":
                 return "A tag called '" + getTag() + "' exists on a commit containing '" + getContents() + "'.";
+            case "tagged-commit-added-text-to-file":
+                return "A tag called '" + getTag() + "' exists on a commit that added '" + getContents() + "' to the file at '" + getPath() + "'.";
             default:
                 return "Unknown rule";
         }
@@ -173,7 +175,12 @@ public class Rule {
     }
 
     boolean getIgnoreCase() {
-        return (boolean) details.getOrDefault("ignore-case", false);
+
+        Object result = details.getOrDefault("ignore-case", false);
+        if (result instanceof Boolean) {
+            return (boolean) result;
+        } else
+            return result instanceof String && ((String) result).toLowerCase().equals("true");
     }
 
     /**

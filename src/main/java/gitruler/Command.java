@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.text.DecimalFormat;
 
-@CommandLine.Command(name = "testrepo", mixinStandardHelpOptions = true, version = "Gitruler 0.2")
+@CommandLine.Command(name = "java -jar gitruler.jar", mixinStandardHelpOptions = true, version = "Gitruler 1.0")
 public class Command implements Runnable {
 
     private static final String ANSI_RESET = "\u001B[0m";
@@ -29,8 +29,7 @@ public class Command implements Runnable {
 
     private static final String DEFAULT_CONFIG_FILENAME = "gitrules.json";
 
-    @Option(names = { "-v", "--verbose" }, description = "Verbose mode. Helpful for troubleshooting. " +
-            "Multiple -v options increase the verbosity.")
+    @Option(names = { "-v", "--verbose" }, description = "Verbose mode. Print system error messages.")
     private boolean verbose;
 
     @Option(names = { "-c", "--config" }, paramLabel = "Config File Path", description = "The file containing rules")
@@ -39,6 +38,8 @@ public class Command implements Runnable {
     @Option(names = { "-r", "--repo" }, paramLabel = "Repository Path", description = "The repository to test")
     private String repositoryPath;
 
+    @Option(names = { "-a", "--advice" }, description = "Advice mode. How hints and errors")
+    private boolean showAdvice;
 
     private GitRulerConfig config;
     private GitInteractor git;
@@ -177,11 +178,11 @@ public class Command implements Runnable {
         if (rule.hasPostText())
             resultString.append(rule.getPostText());
 
-        if (rule.hasFailureMessage() && !result.hasPassed()){
+        if (rule.hasFailureMessage() && !result.hasPassed() && showAdvice){
             resultString.append(": ").append(rule.getFailureMessage());
         }
 
-        if (result.exceptionOccurred && verbose){
+        if (result.exceptionOccurred && showAdvice){
             resultString.append("Exception:");
             resultString.append(result.getExceptionMessage());
             resultString.append(result.getExceptionTrace());

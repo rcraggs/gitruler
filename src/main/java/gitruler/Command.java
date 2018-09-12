@@ -177,7 +177,10 @@ public class Command implements Runnable {
         if (rule.hasPreText())
             resultString.append(" ").append(rule.getPreText());
 
-        resultString.append(" ").append(rule.getTitle()).append(" ").append(result.getMessage());
+        if (showAdvice || verbose)
+            resultString.append(" ").append(rule.getTitle()).append(" ").append(result.getMessage());
+        else
+            resultString.append(" ").append(rule.getTitle());
 
         if (rule.hasPostText())
             resultString.append(rule.getPostText());
@@ -186,7 +189,7 @@ public class Command implements Runnable {
             resultString.append(": ").append(rule.getFailureMessage());
         }
 
-        if (result.exceptionOccurred && showAdvice){
+        if (result.exceptionOccurred && verbose){
             resultString.append("Exception:");
             resultString.append(result.getExceptionMessage());
             resultString.append(result.getExceptionTrace());

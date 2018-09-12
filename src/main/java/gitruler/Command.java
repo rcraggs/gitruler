@@ -112,7 +112,11 @@ public class Command implements Runnable {
         // Print the total score
         if (config.getTotalAvailableScore() > 0) {
             System.out.println();
-            System.out.println(ANSI_CYAN + "Score: " + formatter.format(totalScore) + " out of " + formatter.format(config.getTotalAvailableScore()) + ANSI_RESET);
+            String congratulationsString = "";
+            if (totalScore == config.getTotalAvailableScore()) {
+                congratulationsString = " Perfect!";
+            }
+            System.out.println(ANSI_CYAN + "Score: " + formatter.format(totalScore) + " out of " + formatter.format(config.getTotalAvailableScore()) + congratulationsString + ANSI_RESET);
         }
     }
 

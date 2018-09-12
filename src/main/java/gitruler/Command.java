@@ -18,6 +18,9 @@ public class Command implements Runnable {
     private static final String ANSI_CYAN = "\u001B[36m";
     private static final String ANSI_YELLOW = "\u001B[33m";
 
+    private static final String NEW_LINE = System.getProperty("line.separator");
+
+
     private static final String CORRECT_TICK = ANSI_GREEN + "[\u2713]" + ANSI_RESET;
     private static final String WRONG_CROSS = ANSI_RED + "[\u2718]" + ANSI_RESET;
     private static final String SKIP = ANSI_YELLOW + "[-]" + ANSI_RESET;
@@ -114,6 +117,8 @@ public class Command implements Runnable {
 
     private void runFileSetup() throws IOException {
 
+        boolean setupRequiredAndSuccessful = false;
+
         // If this is the first time, then create the setup files
         if (!Files.exists(Paths.get(repositoryPath + File.separator + ".gitruler"),
                 LinkOption.NOFOLLOW_LINKS)) {
@@ -132,6 +137,8 @@ public class Command implements Runnable {
                         Files.write(newFilePath, content.getBytes(), StandardOpenOption.APPEND);
                     }
 
+                    setupRequiredAndSuccessful = true;
+
                 }catch(FileAlreadyExistsException e){
                     if (verbose) {
                         System.out.println("Warning: I was asked to create a file that already exists: " + newFilePath.toString() );
@@ -140,6 +147,11 @@ public class Command implements Runnable {
             }
 
             Files.write(Paths.get(repositoryPath + File.separator + ".gitruler"), "setup done".getBytes());
+
+            // If the setup ran, print a message
+            if (setupRequiredAndSuccessful) {
+                System.out.println(ANSI_CYAN + NEW_LINE + "[Info] I ran for the first time and performed the file setup. Now running the rules." + NEW_LINE + ANSI_RESET);
+            }
         }
     }
 

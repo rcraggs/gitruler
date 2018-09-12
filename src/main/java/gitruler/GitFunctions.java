@@ -89,7 +89,6 @@ class GitFunctions {
         return null;
     }
 
-
     /**
      * Get the contents of a file from a tree
      * @param treeId The Id to look at

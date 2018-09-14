@@ -17,6 +17,7 @@ public class Command implements Runnable {
     private static final String ANSI_GREEN = "\u001B[32m";
     private static final String ANSI_CYAN = "\u001B[36m";
     private static final String ANSI_YELLOW = "\u001B[33m";
+    private static final String ANSI_PURPLE = "\u001B[35m";
 
     private static final String NEW_LINE = System.getProperty("line.separator");
 
@@ -177,8 +178,10 @@ public class Command implements Runnable {
         if (rule.hasPreText())
             resultString.append(" ").append(rule.getPreText());
 
-        if (showAdvice || verbose)
-            resultString.append(" ").append(rule.getTitle()).append(" ").append(result.getMessage());
+        if (showAdvice || verbose) {
+            resultString.append(" ").append(rule.getTitle()).append(" ");
+            resultString.append(ANSI_PURPLE).append(result.getMessage()).append(ANSI_RESET);
+        }
         else
             resultString.append(" ").append(rule.getTitle());
 

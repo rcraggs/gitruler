@@ -27,23 +27,23 @@ public class Rule {
 
         switch (getRuleName()){
             case "file-contains-in-head":
-                return "The file: " + (String) details.get("path") + " contains the text '" + (String) details.get("contents") + "'";
+                return (String) details.get("path") + " contains '" + (String) details.get("contents") + "'";
             case "file-tracked-in-head":
-                return "The file is tracked: " + (String) details.get("path");
+                return (String) details.get("path") + " is tracked by git";
             case "head-exists":
                 return "There is a valid repository";
             case "file-untracked-in-head":
-                return "The file is not tracked: " + (String) details.get("path");
+                return (String) details.get("path") + " is not tracked by git";
             case "file-has-hash-in-head":
-                return "An existing file should now be at: " + (String) details.get("path");
+                return "A file with hash '" + (String) details.get("hash") + "' is at " + (String) details.get("path");
             case "last-commit-message-for-file-contains":
                 return "Latest commit message for " + (String) details.get("path") + " contains " + (String) details.get("contents");
             case "any-commit-message-for-file-contains":
-                return "Any commit message for " + (String) details.get("path") + " contains " + (String) details.get("contents");
+                return (String) details.get("path") + " was committed with a message containing '" + (String) details.get("contents") + "'";
             case "any-commit-message-contains":
-                return "Any commit message contains '" + (String) details.get("contents") + "'";
+                return "There is a commit with a message containing '" + (String) details.get("contents") + "'";
             case "commit-with-message-updated-file":
-                return "A commit with a message containing '" + (String) details.get("contents") + "' included a change to '" + (String) details.get("path") + "'";
+                return (String) details.get("path") + " was committed using the messages '" + (String) details.get("contents") + "'";
             case "commit-with-message-doesnt-update-file":
                 return "A commit with a message containing '" + (String) details.get("contents") + "' does not include a change to '" + (String) details.get("path") + "'";
             case TEXT_RULE_NAME:
@@ -61,9 +61,9 @@ public class Rule {
             case "commit-with-message-was-made-on-branch":
                 return "The commit whose message contained '" + getContents() + "' was made on the branch '" + getBranch() + "'";
             case "tag-exists":
-                return "A tag called '" + getTag() + "' exists";
+                return "There is a tag called '" + getTag() + "'";
             case "commit-with-message-has-tag":
-                return "A tag called '" + getTag() + "' exists on a commit containing '" + getContents() + "'.";
+                return "The commit with a message containing '" + getContents() + "' is tagged with '" + getTag() + "'"; 
             case "tagged-commit-added-text-to-file":
                 return "A tag called '" + getTag() + "' exists on a commit that added '" + getContents() + "' to the file at '" + getPath() + "'.";
             default:

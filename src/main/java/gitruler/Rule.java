@@ -176,7 +176,7 @@ public class Rule {
 
     boolean getIgnoreCase() {
 
-        Object result = details.getOrDefault("ignore-case", false);
+        Object result = details.getOrDefault("ignore-case", true);
         if (result instanceof Boolean) {
             return (boolean) result;
         } else

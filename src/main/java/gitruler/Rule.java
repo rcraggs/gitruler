@@ -66,6 +66,8 @@ public class Rule {
                 return "The commit with a message containing '" + getContents() + "' is tagged with '" + getTag() + "'"; 
             case "tagged-commit-added-text-to-file":
                 return "A tag called '" + getTag() + "' exists on a commit that added '" + getContents() + "' to the file at '" + getPath() + "'.";
+            case "at-least-a-number-of-commits":
+                return "There are at least " + details.get("number") + " commits.";
             default:
                 return "Unknown rule";
         }

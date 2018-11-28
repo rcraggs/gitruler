@@ -21,7 +21,6 @@ public class Command implements Runnable {
 
     private static final String NEW_LINE = System.getProperty("line.separator");
 
-
     private static final String CORRECT_TICK = ANSI_GREEN + "[\u2713]" + ANSI_RESET;
     private static final String WRONG_CROSS = ANSI_RED + "[\u2718]" + ANSI_RESET;
     private static final String SKIP = ANSI_YELLOW + "[-]" + ANSI_RESET;
@@ -41,6 +40,9 @@ public class Command implements Runnable {
 
     @Option(names = { "-a", "--advice" }, description = "Advice mode. How hints and errors")
     private boolean showAdvice;
+
+    @Option(names = { "-s", "--summary" }, description = "Only list the repository name and score. For marking work.")
+    private boolean summary;
 
     private GitRulerConfig config;
     private GitInteractor git;
@@ -95,7 +97,9 @@ public class Command implements Runnable {
         for (Rule r: config.getRules()){
 
             RuleResult result = git.checkRule(r);
-            System.out.println(createOutputFromRuleAndResult(result, r, skipRemainingRules));
+            if (!summary) {
+                System.out.println(createOutputFromRuleAndResult(result, r, skipRemainingRules));
+            }
 
             if (result.hasPassed()){
                 totalScore += r.getScoreIfCorrect();
@@ -112,12 +116,28 @@ public class Command implements Runnable {
 
         // Print the total score
         if (config.getTotalAvailableScore() > 0) {
-            System.out.println();
+
             String congratulationsString = "";
             if (totalScore == config.getTotalAvailableScore()) {
                 congratulationsString = " Perfect!";
             }
-            System.out.println(ANSI_CYAN + "Score: " + formatter.format(totalScore) + " out of " + formatter.format(config.getTotalAvailableScore()) + congratulationsString + ANSI_RESET);
+
+            System.out.println();
+            String resultOutput;
+            if (summary){
+
+                String repoName = "";
+                if (repositoryPath.lastIndexOf("/") > 0){
+                    repoName = repositoryPath.substring(repositoryPath.lastIndexOf("/")+1);
+                }else{
+                    repoName = repositoryPath;
+                }
+                resultOutput = repoName + ": " + formatter.format(totalScore) + " out of " + formatter.format(config.getTotalAvailableScore());
+            }else{
+                resultOutput = ANSI_CYAN + "Score: " + formatter.format(totalScore) + " out of " + formatter.format(config.getTotalAvailableScore()) + congratulationsString + ANSI_RESET;
+            }
+
+            System.out.println(resultOutput);
         }
     }
 
@@ -155,7 +175,7 @@ public class Command implements Runnable {
             Files.write(Paths.get(repositoryPath + File.separator + ".gitruler"), "setup done".getBytes());
 
             // If the setup ran, print a message
-            if (setupRequiredAndSuccessful) {
+            if (setupRequiredAndSuccessful && !summary) {
                 System.out.println(ANSI_CYAN + NEW_LINE + "[Info] I ran for the first time and performed the file setup. Now running the rules." + NEW_LINE + ANSI_RESET);
             }
         }

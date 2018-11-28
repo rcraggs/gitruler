@@ -86,12 +86,29 @@ class GitInteractor {
                 return checkTagIsOnCommitWithMessage(r);
             case "tagged-commit-added-text-to-file":
                 return checkTagIsOnCommitThatAddedTextToFile(r);
+            case "at-least-a-number-of-commits":
+                return checkAtLeastCommits(r);
             default:
                 RuleResult result = new RuleResult();
                 result.setPassed(false);
                 result.setMessage("Could not run this rule.");
                 return result;
         }
+    }
+
+    private RuleResult checkAtLeastCommits(Rule r) {
+
+        RuleResult ruleResult = new RuleResult();
+
+        int numCommits = 0;
+        try {
+            numCommits = gitFunctions.getNumberOfCommits();
+        } catch (GitAPIException e) {
+            ruleResult.setFailWithMessage("Failed to count the commits");
+        }
+        ruleResult.setPassed(numCommits >=  (int) r.details.getOrDefault("number", 0));
+
+        return ruleResult;
     }
 
     /**

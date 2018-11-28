@@ -102,6 +102,21 @@ class GitFunctions {
         return s.hasNext() ? s.next() : "";
     }
 
+    /**
+     * Get the number of commits in a repo
+     * @return
+     * @throws GitAPIException
+     */
+    int getNumberOfCommits() throws GitAPIException {
+        Git git = new Git(repo);
+        Iterable<RevCommit> commits = git.log().call();
+        int count = 0;
+        for( RevCommit ignored : commits ) {
+            count++;
+        }
+
+        return count;
+    }
 
     /**
      * Get a commit that was made with a commit message containing certain text

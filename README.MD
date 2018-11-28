@@ -83,6 +83,7 @@ Rules are the checks that will be made on the repository each time the applicati
 | `tag-exists` | Check if there is a tag with the given name anywhere in the repository | `tag` | - |
 | `commit-with-message-has-tag` | Check that a given commit is tagged| `tag`, `contents` | `ignore-case` |
 | `tagged-commit-added-text-to-file` | Check if a commit with the given tag added certain text to a file | `tag`, `contents`, `path` | `ignore-case` (of file contents) |
+| `at-least-a-number-of-commits` | Ensure a certain number of commits are in the repository | `number` (integer) |  |
 
 #### Common Rule Options
 

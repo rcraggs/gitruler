@@ -96,16 +96,21 @@ public class Command implements Runnable {
         boolean skipRemainingRules = false;
         for (Rule r: config.getRules()){
 
-            RuleResult result = git.checkRule(r);
+            RuleResult result = null;
+
+            if (!skipRemainingRules) {
+                result = git.checkRule(r);
+            }
+
             if (!summary) {
                 System.out.println(createOutputFromRuleAndResult(result, r, skipRemainingRules));
             }
 
-            if (result.hasPassed()){
+            if (!skipRemainingRules && result.hasPassed()){
                 totalScore += r.getScoreIfCorrect();
             }
 
-            if (!result.hasPassed() && r.stopOnFail()){
+            if (!skipRemainingRules && !result.hasPassed() && r.stopOnFail()){
                 skipRemainingRules = true;
             }
         }

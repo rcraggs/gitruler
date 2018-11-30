@@ -194,7 +194,7 @@ class GitInteractor {
         }else{
             try {
                 result.setPassed(gitFunctions.isCommitTagged(commit, r.getTag()));
-            } catch (IOException e) {
+            } catch (IOException | GitAPIException e) {
                 result = createResultFromException(e);
             }
         }

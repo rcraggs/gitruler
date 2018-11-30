@@ -464,10 +464,10 @@ class GitFunctions {
      * @param tag the name of the tag
      * @return True if the commit is correctly tagged.
      */
-    boolean isCommitTagged(RevCommit commit, String tag) throws IOException {
+    boolean isCommitTagged(RevCommit commit, String tag) throws IOException, GitAPIException {
 
-        Ref tagRef = repo.findRef(tag);
-        return tagRef != null && tagRef.getObjectId().equals(commit.toObjectId());
+        RevCommit revCommit = getCommitFromRefString(tag);
+        return revCommit != null && revCommit.getId().equals(commit.getId());
     }
 
     /**

@@ -6,7 +6,7 @@ GitRuler helps the teaching and assessment of git skills.
 
 GitRuler allows you to easily create exercises where leaners follow a set of instructions to carry out on a repository, and will be scored, with feedback on their progress
 
-
+![docs/images/longer-screenshot.png]
 
 ## Installation and Running
 

@@ -242,6 +242,8 @@ class GitFunctions {
 
         RevTree tree = commit.getTree();
 
+
+
         TreeWalk treeWalk = new TreeWalk(repo);
         treeWalk.addTree(tree);
         treeWalk.setRecursive(true);
@@ -271,6 +273,11 @@ class GitFunctions {
 
         RevWalk revWalk = new RevWalk(repo);
         return revWalk.parseCommit(commitId);
+    }
+
+    RevCommit parseCommit(RevCommit commit) throws IOException {
+        RevWalk revWalk = new RevWalk(repo);
+        return revWalk.parseCommit(commit);
     }
 
     /**

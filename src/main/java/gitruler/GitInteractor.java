@@ -8,6 +8,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 import java.io.File;
@@ -148,7 +149,13 @@ class GitInteractor {
                             // If there are parents, then the required text must not be in any of them
                             boolean textFoundInParent = false;
                             for (RevCommit parent : parents){
-                                textFoundInParent = textFoundInParent || doesPathInCommitContainText(r, parent);
+
+                                // Ensure that the path is in the parent commit
+                                parent = gitFunctions.parseCommit(parent);
+                                boolean pathExistsInParent = gitFunctions.pathExistsInCommit(parent, r.getPath());
+
+                                boolean parentContainedText = pathExistsInParent && doesPathInCommitContainText(r, parent);
+                                textFoundInParent = textFoundInParent || parentContainedText;
                             }
 
                             if (textFoundInParent){

@@ -4,9 +4,9 @@
 
 GitRuler helps the teaching and assessment of git skills.
 
-GitRuler is a little like unit testing a git repository. It checks whether a repo matches the state describes in a config file. For example it can check that a file at a given path is being tracked, or that there is a branch with a certain name. 
+GitRuler allows you to easily create exercises where leaners follow a set of instructions to carry out on a repository, and will be scored, with feedback on their progress
 
-Teachers create instructions and matching configurations to allow students to practice their git skills and check their progress.
+![](docs/images/longer-screenshot.png)
 
 ## Installation and Running
 

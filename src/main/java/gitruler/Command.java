@@ -49,6 +49,9 @@ public class Command implements Runnable {
 
     public void run() {
 
+
+        int exitCode = 1; // So that it can be used to fail a build in continuous integration
+
         // Read the config
         if (repositoryPath == null){
             repositoryPath = System.getProperty("user.dir");
@@ -125,6 +128,7 @@ public class Command implements Runnable {
             String congratulationsString = "";
             if (totalScore == config.getTotalAvailableScore()) {
                 congratulationsString = " Perfect!";
+                exitCode = 0; // exit as not a fail for a CI build
             }
 
             System.out.println();
@@ -143,6 +147,7 @@ public class Command implements Runnable {
             }
 
             System.out.println(resultOutput);
+            System.exit(exitCode);
         }
     }
 

@@ -357,6 +357,13 @@ class GitInteractor {
             }
         }
 
+        // Pass the rule if the parent folder doesn't exist and the command
+        // doesn't tell us to do otherwise.
+        if (!Files.exists(Paths.get(path.toString()).getParent())){
+            result.setPassed(true);
+            return result;
+        }
+
         // Create a file
         try {
             Files.write(path, DUMMY_CONTENT.getBytes(), StandardOpenOption.CREATE_NEW);
